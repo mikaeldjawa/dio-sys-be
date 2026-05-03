@@ -5,15 +5,16 @@
     ".": {
       "default": "./src/index.ts"
     },
-    "./*": {
-      "default": "./src/*.ts"
+    "./schema": {
+      "default": "./src/schema/index.ts"
     }
   },
   "scripts": {
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "tsx src/migrate.ts",
+    "db:seed": "tsx src/seed.ts"
   },
   "dependencies": {
     "@dio-sys-be/env": "*",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@dio-sys-be/config": "*",
     "drizzle-kit": "^0.31.8",
+    "tsx": "^4.19.2",
     "typescript": "^6"
   }
 }

@@ -12,13 +12,16 @@
   "dependencies": {
     "@dio-sys-be/db": "*",
     "@dio-sys-be/env": "*",
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
+    "jose": "^5.9.6",
     "zod": "^4.1.13"
   },
   "devDependencies": {
     "@dio-sys-be/config": "*",
+    "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/node": "^22.13.14",

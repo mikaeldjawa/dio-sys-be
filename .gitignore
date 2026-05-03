@@ -49,3 +49,6 @@ coverage
 .cache
 tmp
 temp
+.windsurf
+IMPLEMENTATION_SUMMARY.md
+SETUP.md

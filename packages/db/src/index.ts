@@ -1,12 +1,12 @@
 import { env } from "@dio-sys-be/env/server";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { Pool } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
 import * as relation from "./relations";
 import * as schema from "./schema";
 
 export function createDb() {
-  const sql = neon(env.DATABASE_URL);
-  return drizzle(sql, {
+  const pool = new Pool({ connectionString: env.DATABASE_URL });
+  return drizzle(pool, {
     schema: {
       ...schema,
       ...relation,

@@ -14,7 +14,8 @@
     "db:push": "npm run db:push --workspace @dio-sys-be/db",
     "db:studio": "npm run db:studio --workspace @dio-sys-be/db",
     "db:generate": "npm run db:generate --workspace @dio-sys-be/db",
-    "db:migrate": "npm run db:migrate --workspace @dio-sys-be/db"
+    "db:migrate": "npm run db:migrate --workspace @dio-sys-be/db",
+    "db:seed": "npm run db:seed --workspace @dio-sys-be/db"
   },
   "dependencies": {
     "@dio-sys-be/env": "*",
