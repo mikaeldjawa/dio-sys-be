@@ -2,6 +2,7 @@ import { env } from "@dio-sys-be/env/server";
 import cors from "cors";
 import express from "express";
 import { errorHandler } from "./middlewares/error.middleware";
+import tenantRoute from "./modules/tenant/tenant.routes";
 import userRoute from "./modules/user/user.route";
 
 const app = express();
@@ -15,7 +16,8 @@ app.use(
 
 app.use(express.json());
 
-app.use("/users", userRoute);
+app.use("/api/users", userRoute);
+app.use("/tenants", tenantRoute);
 
 app.use(errorHandler);
 
