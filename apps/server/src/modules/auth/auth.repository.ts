@@ -10,6 +10,15 @@ import { eq } from "drizzle-orm";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
+type RoleWithPermissions = {
+  id: string;
+  tenantId: string;
+  name: string;
+  scope: "GLOBAL" | "TENANT";
+  createdAt: string | Date;
+  permissions: string[];
+};
+
 export const findUserByEmail = async (email: string) => {
   return db.query.users.findFirst({
     where: (user, { eq }) => eq(user.email, email),
@@ -85,7 +94,9 @@ export const findTenantById = async (id: string) => {
   });
 };
 
-export const findRoleWithPermissions = async (roleId: string) => {
+export const findRoleWithPermissions = async (
+  roleId: string,
+): Promise<RoleWithPermissions | null> => {
   const role = await db.query.roles.findFirst({
     where: (r, { eq }) => eq(r.id, roleId),
     with: {
@@ -99,10 +110,14 @@ export const findRoleWithPermissions = async (roleId: string) => {
 
   if (!role) return null;
 
-  const permissionNames = role.rolePermissions.map((rp) => rp.permission.name);
+  const permissionNames = role.rolePermissions.map((rp) => rp.permission.name as string);
 
   return {
-    ...role,
+    id: role.id,
+    tenantId: role.tenantId,
+    name: role.name,
+    scope: role.scope,
+    createdAt: role.createdAt,
     permissions: permissionNames,
   };
 };

@@ -66,7 +66,7 @@ export const register = async (input: RegisterInput) => {
     }
 
     const tenantPermissions = allPermissions.filter(
-      (perm) =>
+      (perm: { name: string }) =>
         perm.name.endsWith(":view") ||
         perm.name.endsWith(":manage") ||
         perm.name.startsWith("menu:") ||
@@ -77,7 +77,7 @@ export const register = async (input: RegisterInput) => {
         perm.name.startsWith("transaction:"),
     );
 
-    const rolePermissionRows = tenantPermissions.map((perm) => ({
+    const rolePermissionRows = tenantPermissions.map((perm: { id: string }) => ({
       roleId: role.id,
       permissionId: perm.id,
     }));
@@ -98,8 +98,8 @@ export const register = async (input: RegisterInput) => {
     );
 
     return {
-      userId: user.id,
-      tenantId: tenant.id,
+      userId: user.id as string,
+      tenantId: tenant.id as string,
     };
   });
 };
@@ -129,8 +129,8 @@ export const login = async (input: LoginInput) => {
 
   const secret = new TextEncoder().encode(env.JWT_SECRET);
   const accessToken = await new SignJWT({
-    sub: user.id,
-    tenantId: tenant.id,
+    sub: user.id as string,
+    tenantId: tenant.id as string,
     scope: roleWithPermissions.scope,
     permissions: roleWithPermissions.permissions,
   })
@@ -140,8 +140,8 @@ export const login = async (input: LoginInput) => {
 
   const refreshSecret = new TextEncoder().encode(env.JWT_REFRESH_SECRET);
   const refreshToken = await new SignJWT({
-    sub: user.id,
-    tenantId: tenant.id,
+    sub: user.id as string,
+    tenantId: tenant.id as string,
     type: "refresh",
   })
     .setProtectedHeader({ alg: "HS256" })
@@ -192,8 +192,8 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
 
   const secret = new TextEncoder().encode(env.JWT_SECRET);
   const accessToken = await new SignJWT({
-    sub: user.id,
-    tenantId: tenant.id,
+    sub: user.id as string,
+    tenantId: tenant.id as string,
     scope: roleWithPermissions.scope,
     permissions: roleWithPermissions.permissions,
   })
@@ -203,8 +203,8 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
 
   const newRefreshSecret = new TextEncoder().encode(env.JWT_REFRESH_SECRET);
   const newRefreshToken = await new SignJWT({
-    sub: user.id,
-    tenantId: tenant.id,
+    sub: user.id as string,
+    tenantId: tenant.id as string,
     type: "refresh",
   })
     .setProtectedHeader({ alg: "HS256" })
