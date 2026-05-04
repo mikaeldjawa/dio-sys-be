@@ -1,7 +1,9 @@
 import { Pool } from "@neondatabase/serverless";
+import bcrypt from "bcrypt";
 import dotenv from "dotenv";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { permissions } from "./schema";
+import { permissions, rolePermissions, roles, tenants, users } from "./schema";
 
 dotenv.config({ path: "../../apps/server/.env" });
 
@@ -13,8 +15,29 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const db = drizzle(pool);
 
 const defaultPermissions = [
-  "tenant:read",
+  "tenant:list",
+  "tenant:create",
   "tenant:update",
+  "tenant:delete",
+  "tenant:view",
+  "tenant:manage",
+  "role:list",
+  "role:create",
+  "role:update",
+  "role:delete",
+  "role:view",
+  "role:manage",
+  "permission:list",
+  "permission:create",
+  "permission:update",
+  "permission:delete",
+  "permission:view",
+  "user:list",
+  "user:create",
+  "user:update",
+  "user:delete",
+  "user:view",
+  "user:manage",
   "menu:create",
   "menu:read",
   "menu:update",
@@ -36,37 +59,91 @@ const defaultPermissions = [
   "customer:update",
   "transaction:create",
   "transaction:read",
-  "user:create",
-  "user:read",
-  "user:update",
-  "user:delete",
-  "role:create",
-  "role:read",
-  "role:update",
-  "role:delete",
 ];
 
 export const seedPermissions = async () => {
   console.log("Seeding permissions...");
 
   const existingPermissions = await db.select().from(permissions);
+  const existingNames = new Set(existingPermissions.map((p) => p.name));
 
-  if (existingPermissions.length > 0) {
+  const missingPermissions = defaultPermissions.filter(
+    (name) => !existingNames.has(name),
+  );
+
+  if (missingPermissions.length === 0) {
     console.log(
-      `Permissions already seeded (${existingPermissions.length} found). Skipping.`,
+      `All permissions already seeded (${existingPermissions.length} found). Skipping.`,
     );
     return;
   }
 
-  const permissionRows = defaultPermissions.map((name) => ({ name }));
+  const permissionRows = missingPermissions.map((name) => ({ name }));
 
   await db.insert(permissions).values(permissionRows);
 
-  console.log(`Seeded ${permissionRows.length} permissions successfully.`);
+  console.log(
+    `Seeded ${permissionRows.length} new permissions successfully (${existingPermissions.length} already existed).`,
+  );
+};
+
+export const seedSuperAdmin = async () => {
+  console.log("Seeding super-admin...");
+
+  const existingTenant = await db
+    .select()
+    .from(tenants)
+    .where(eq(tenants.slug, "system"))
+    .limit(1);
+
+  if (existingTenant.length > 0) {
+    console.log("Super-admin already exists. Skipping.");
+    return;
+  }
+
+  const tenant = await db
+    .insert(tenants)
+    .values({ name: "System", slug: "system" })
+    .returning();
+
+  const allPermissions = await db.select().from(permissions);
+
+  const role = await db
+    .insert(roles)
+    .values({
+      tenantId: tenant[0]!.id,
+      name: "Super Admin",
+      scope: "GLOBAL",
+    })
+    .returning();
+
+  const rolePermissionRows = allPermissions.map((perm) => ({
+    roleId: role[0]!.id,
+    permissionId: perm.id,
+  }));
+
+  await db.insert(rolePermissions).values(rolePermissionRows);
+
+  const hashedPassword = await bcrypt.hash("Admin@123", 12);
+
+  await db.insert(users).values({
+    tenantId: tenant[0]!.id,
+    roleId: role[0]!.id,
+    name: "Super Admin",
+    email: "admin@system.local",
+    password: hashedPassword,
+  });
+
+  console.log("Super-admin seeded successfully.");
+  console.log("Email: admin@system.local");
+  console.log("Password: Admin@123");
 };
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  seedPermissions()
+  (async () => {
+    await seedPermissions();
+    await seedSuperAdmin();
+  })()
     .then(() => {
       console.log("Seed completed.");
       process.exit(0);

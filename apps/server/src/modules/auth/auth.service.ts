@@ -56,7 +56,7 @@ export const register = async (input: RegisterInput) => {
     );
 
     const role = await authRepo.createRole(
-      { tenantId: tenant.id, name: "Admin", scope: "TENANT" },
+      { tenantId: tenant.id, name: "Owner", scope: "TENANT" },
       tx,
     );
 
@@ -65,7 +65,19 @@ export const register = async (input: RegisterInput) => {
       throw new AppError("System permissions not configured", 500);
     }
 
-    const rolePermissionRows = allPermissions.map((perm) => ({
+    const tenantPermissions = allPermissions.filter(
+      (perm) =>
+        perm.name.endsWith(":view") ||
+        perm.name.endsWith(":manage") ||
+        perm.name.startsWith("menu:") ||
+        perm.name.startsWith("category:") ||
+        perm.name.startsWith("order:") ||
+        perm.name.startsWith("table:") ||
+        perm.name.startsWith("customer:") ||
+        perm.name.startsWith("transaction:"),
+    );
+
+    const rolePermissionRows = tenantPermissions.map((perm) => ({
       roleId: role.id,
       permissionId: perm.id,
     }));

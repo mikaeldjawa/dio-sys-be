@@ -3,7 +3,7 @@ import { tenants } from "./tenant";
 
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenanId: uuid("tenant_id")
+  tenantId: uuid("tenant_id")
     .references(() => tenants.id)
     .notNull(),
   name: text("name").notNull(),
