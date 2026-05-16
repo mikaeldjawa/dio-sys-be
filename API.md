@@ -1,12 +1,15 @@
 # API Documentation
 
 ## Base URL
+
 ```
 http://localhost:3000/api/v1
 ```
 
 ## Authentication
+
 All endpoints (except authentication endpoints) require a Bearer token in the Authorization header:
+
 ```
 Authorization: Bearer <access_token>
 ```
@@ -14,6 +17,7 @@ Authorization: Bearer <access_token>
 ## Response Format
 
 ### Success Response
+
 ```json
 {
   "success": true,
@@ -22,6 +26,7 @@ Authorization: Bearer <access_token>
 ```
 
 ### Error Response
+
 ```json
 {
   "success": false,
@@ -35,11 +40,13 @@ Authorization: Bearer <access_token>
 ## Authentication
 
 ### Register
+
 Create a new tenant and owner account.
 
 **Endpoint:** `POST /auth/register`
 
 **Request Body:**
+
 ```json
 {
   "name": "John Doe",
@@ -50,6 +57,7 @@ Create a new tenant and owner account.
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -61,11 +69,13 @@ Create a new tenant and owner account.
 ```
 
 ### Login
+
 Authenticate and receive access tokens.
 
 **Endpoint:** `POST /auth/login`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -74,6 +84,7 @@ Authenticate and receive access tokens.
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -92,11 +103,13 @@ Authenticate and receive access tokens.
 ```
 
 ### Refresh Token
+
 Get a new access token using refresh token.
 
 **Endpoint:** `POST /auth/refresh`
 
 **Request Body:**
+
 ```json
 {
   "refreshToken": "eyJhbGc..."
@@ -104,6 +117,7 @@ Get a new access token using refresh token.
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -118,6 +132,7 @@ Get a new access token using refresh token.
 ## Tenants
 
 ### List All Tenants
+
 Get all tenants (GLOBAL scope only).
 
 **Endpoint:** `GET /tenants`
@@ -125,6 +140,7 @@ Get all tenants (GLOBAL scope only).
 **Auth:** GLOBAL scope required
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -140,6 +156,7 @@ Get all tenants (GLOBAL scope only).
 ```
 
 ### Get My Tenant
+
 Get own tenant (both scopes).
 
 **Endpoint:** `GET /tenants/me`
@@ -147,6 +164,7 @@ Get own tenant (both scopes).
 **Auth:** Required (both scopes)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -160,6 +178,7 @@ Get own tenant (both scopes).
 ```
 
 ### Get Tenant by ID
+
 Get specific tenant (GLOBAL scope only).
 
 **Endpoint:** `GET /tenants/:id`
@@ -167,6 +186,7 @@ Get specific tenant (GLOBAL scope only).
 **Auth:** GLOBAL scope required
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -180,6 +200,7 @@ Get specific tenant (GLOBAL scope only).
 ```
 
 ### Create Tenant
+
 Create a new tenant (GLOBAL scope only).
 
 **Endpoint:** `POST /tenants`
@@ -187,6 +208,7 @@ Create a new tenant (GLOBAL scope only).
 **Auth:** GLOBAL scope required
 
 **Request Body:**
+
 ```json
 {
   "name": "New Restaurant",
@@ -195,6 +217,7 @@ Create a new tenant (GLOBAL scope only).
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -208,6 +231,7 @@ Create a new tenant (GLOBAL scope only).
 ```
 
 ### Update My Tenant
+
 Update own tenant (both scopes).
 
 **Endpoint:** `PATCH /tenants/me`
@@ -215,6 +239,7 @@ Update own tenant (both scopes).
 **Auth:** Required (both scopes)
 
 **Request Body:**
+
 ```json
 {
   "name": "Updated Restaurant Name"
@@ -222,6 +247,7 @@ Update own tenant (both scopes).
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -235,6 +261,7 @@ Update own tenant (both scopes).
 ```
 
 ### Update Tenant by ID
+
 Update specific tenant (GLOBAL scope only).
 
 **Endpoint:** `PATCH /tenants/:id`
@@ -242,6 +269,7 @@ Update specific tenant (GLOBAL scope only).
 **Auth:** GLOBAL scope required
 
 **Request Body:**
+
 ```json
 {
   "name": "Updated Name",
@@ -252,6 +280,7 @@ Update specific tenant (GLOBAL scope only).
 **Response:** `200 OK`
 
 ### Delete My Tenant
+
 Delete own tenant (both scopes).
 
 **Endpoint:** `DELETE /tenants/me`
@@ -259,6 +288,7 @@ Delete own tenant (both scopes).
 **Auth:** Required (both scopes)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -267,6 +297,7 @@ Delete own tenant (both scopes).
 ```
 
 ### Delete Tenant by ID
+
 Delete specific tenant (GLOBAL scope only).
 
 **Endpoint:** `DELETE /tenants/:id`
@@ -280,6 +311,7 @@ Delete specific tenant (GLOBAL scope only).
 ## Users
 
 ### List Users
+
 List all users (GLOBAL: all users, TENANT: own tenant users).
 
 **Endpoint:** `GET /users`
@@ -287,6 +319,7 @@ List all users (GLOBAL: all users, TENANT: own tenant users).
 **Auth:** Required (both scopes)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -304,6 +337,7 @@ List all users (GLOBAL: all users, TENANT: own tenant users).
 ```
 
 ### Get Users by Tenant
+
 List users in specific tenant.
 
 **Endpoint:** `GET /users/tenant/:tenantId`
@@ -313,6 +347,7 @@ List users in specific tenant.
 **Response:** `200 OK`
 
 ### Get User by ID
+
 Get specific user.
 
 **Endpoint:** `GET /users/:id`
@@ -320,6 +355,7 @@ Get specific user.
 **Auth:** Required (TENANT users can only access users in their tenant)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -335,6 +371,7 @@ Get specific user.
 ```
 
 ### Create User
+
 Create a new user.
 
 **Endpoint:** `POST /users`
@@ -342,6 +379,7 @@ Create a new user.
 **Auth:** Required (TENANT users can only create in their tenant)
 
 **Request Body:**
+
 ```json
 {
   "tenantId": "uuid",
@@ -353,6 +391,7 @@ Create a new user.
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -368,6 +407,7 @@ Create a new user.
 ```
 
 ### Update User
+
 Update user details.
 
 **Endpoint:** `PATCH /users/:id`
@@ -375,6 +415,7 @@ Update user details.
 **Auth:** Required (TENANT users can only update users in their tenant)
 
 **Request Body:**
+
 ```json
 {
   "name": "Jane Doe",
@@ -387,6 +428,7 @@ Update user details.
 **Response:** `200 OK`
 
 ### Delete User
+
 Delete a user.
 
 **Endpoint:** `DELETE /users/:id`
@@ -394,6 +436,7 @@ Delete a user.
 **Auth:** Required (TENANT users can only delete users in their tenant)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -406,6 +449,7 @@ Delete a user.
 ## Roles
 
 ### List Roles
+
 List all roles (GLOBAL: all roles, TENANT: own tenant roles).
 
 **Endpoint:** `GET /roles`
@@ -413,6 +457,7 @@ List all roles (GLOBAL: all roles, TENANT: own tenant roles).
 **Auth:** Required (both scopes)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -429,6 +474,7 @@ List all roles (GLOBAL: all roles, TENANT: own tenant roles).
 ```
 
 ### Get Roles by Tenant
+
 List roles in specific tenant.
 
 **Endpoint:** `GET /roles/tenant/:tenantId`
@@ -438,6 +484,7 @@ List roles in specific tenant.
 **Response:** `200 OK`
 
 ### Get Role by ID
+
 Get specific role.
 
 **Endpoint:** `GET /roles/:id`
@@ -445,6 +492,7 @@ Get specific role.
 **Auth:** Required (TENANT users can only access roles in their tenant)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -459,6 +507,7 @@ Get specific role.
 ```
 
 ### Create Role
+
 Create a new role.
 
 **Endpoint:** `POST /roles`
@@ -466,6 +515,7 @@ Create a new role.
 **Auth:** Required (TENANT users can only create TENANT-scoped roles in their tenant)
 
 **Request Body:**
+
 ```json
 {
   "tenantId": "uuid",
@@ -476,6 +526,7 @@ Create a new role.
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -490,6 +541,7 @@ Create a new role.
 ```
 
 ### Update Role
+
 Update role details.
 
 **Endpoint:** `PATCH /roles/:id`
@@ -497,6 +549,7 @@ Update role details.
 **Auth:** Required (TENANT users can only update roles in their tenant)
 
 **Request Body:**
+
 ```json
 {
   "name": "Senior Manager",
@@ -507,6 +560,7 @@ Update role details.
 **Response:** `200 OK`
 
 ### Delete Role
+
 Delete a role.
 
 **Endpoint:** `DELETE /roles/:id`
@@ -514,6 +568,7 @@ Delete a role.
 **Auth:** Required (TENANT users can only delete roles in their tenant)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -526,6 +581,7 @@ Delete a role.
 ## Permissions
 
 ### List Permissions
+
 List all permissions (both scopes can view).
 
 **Endpoint:** `GET /permissions`
@@ -533,6 +589,7 @@ List all permissions (both scopes can view).
 **Auth:** Required (both scopes)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -547,6 +604,7 @@ List all permissions (both scopes can view).
 ```
 
 ### Get Permission by ID
+
 Get specific permission.
 
 **Endpoint:** `GET /permissions/:id`
@@ -554,6 +612,7 @@ Get specific permission.
 **Auth:** Required (both scopes)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -566,6 +625,7 @@ Get specific permission.
 ```
 
 ### Create Permission
+
 Create a new permission (GLOBAL scope only).
 
 **Endpoint:** `POST /permissions`
@@ -573,6 +633,7 @@ Create a new permission (GLOBAL scope only).
 **Auth:** GLOBAL scope required
 
 **Request Body:**
+
 ```json
 {
   "name": "custom:permission"
@@ -582,6 +643,7 @@ Create a new permission (GLOBAL scope only).
 **Response:** `201 Created`
 
 ### Update Permission
+
 Update permission (GLOBAL scope only).
 
 **Endpoint:** `PATCH /permissions/:id`
@@ -589,6 +651,7 @@ Update permission (GLOBAL scope only).
 **Auth:** GLOBAL scope required
 
 **Request Body:**
+
 ```json
 {
   "name": "updated:permission"
@@ -598,6 +661,7 @@ Update permission (GLOBAL scope only).
 **Response:** `200 OK`
 
 ### Delete Permission
+
 Delete permission (GLOBAL scope only).
 
 **Endpoint:** `DELETE /permissions/:id`
@@ -611,6 +675,7 @@ Delete permission (GLOBAL scope only).
 ## Categories
 
 ### List Categories
+
 List all categories (GLOBAL: all categories, TENANT: own tenant categories).
 
 **Endpoint:** `GET /categories`
@@ -618,6 +683,7 @@ List all categories (GLOBAL: all categories, TENANT: own tenant categories).
 **Auth:** Required (both scopes)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -633,6 +699,7 @@ List all categories (GLOBAL: all categories, TENANT: own tenant categories).
 ```
 
 ### Get Categories by Tenant
+
 List categories in specific tenant.
 
 **Endpoint:** `GET /categories/tenant/:tenantId`
@@ -642,6 +709,7 @@ List categories in specific tenant.
 **Response:** `200 OK`
 
 ### Get Category by ID
+
 Get specific category.
 
 **Endpoint:** `GET /categories/:id`
@@ -649,6 +717,7 @@ Get specific category.
 **Auth:** Required (TENANT users can only access categories in their tenant)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -662,6 +731,7 @@ Get specific category.
 ```
 
 ### Create Category
+
 Create a new category.
 
 **Endpoint:** `POST /categories`
@@ -669,6 +739,7 @@ Create a new category.
 **Auth:** Required (TENANT users can only create in their tenant)
 
 **Request Body:**
+
 ```json
 {
   "tenantId": "uuid",
@@ -677,6 +748,7 @@ Create a new category.
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -690,6 +762,7 @@ Create a new category.
 ```
 
 ### Update Category
+
 Update category details.
 
 **Endpoint:** `PATCH /categories/:id`
@@ -697,6 +770,7 @@ Update category details.
 **Auth:** Required (TENANT users can only update categories in their tenant)
 
 **Request Body:**
+
 ```json
 {
   "name": "Starters"
@@ -706,6 +780,7 @@ Update category details.
 **Response:** `200 OK`
 
 ### Delete Category
+
 Delete a category.
 
 **Endpoint:** `DELETE /categories/:id`
@@ -713,6 +788,7 @@ Delete a category.
 **Auth:** Required (TENANT users can only delete categories in their tenant)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -725,6 +801,7 @@ Delete a category.
 ## Menus
 
 ### List Menus
+
 List all menus with optional filters (GLOBAL: all menus, TENANT: own tenant menus).
 
 **Endpoint:** `GET /menus`
@@ -732,10 +809,12 @@ List all menus with optional filters (GLOBAL: all menus, TENANT: own tenant menu
 **Auth:** Required (both scopes)
 
 **Query Parameters:**
+
 - `categoryId` (optional) - Filter by category UUID
 - `isAvailable` (optional) - Filter by availability (true/false)
 
 **Examples:**
+
 ```
 GET /menus
 GET /menus?categoryId=uuid
@@ -744,6 +823,7 @@ GET /menus?categoryId=uuid&isAvailable=true
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -764,6 +844,7 @@ GET /menus?categoryId=uuid&isAvailable=true
 ```
 
 ### Get Menus by Tenant
+
 List menus in specific tenant.
 
 **Endpoint:** `GET /menus/tenant/:tenantId`
@@ -773,6 +854,7 @@ List menus in specific tenant.
 **Response:** `200 OK`
 
 ### Get Menus by Category
+
 List menus in specific category.
 
 **Endpoint:** `GET /menus/category/:categoryId`
@@ -782,6 +864,7 @@ List menus in specific category.
 **Response:** `200 OK`
 
 ### Get Menu by ID
+
 Get specific menu.
 
 **Endpoint:** `GET /menus/:id`
@@ -789,6 +872,7 @@ Get specific menu.
 **Auth:** Required (TENANT users can only access menus in their tenant)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -807,6 +891,7 @@ Get specific menu.
 ```
 
 ### Create Menu
+
 Create a new menu item.
 
 **Endpoint:** `POST /menus`
@@ -814,6 +899,7 @@ Create a new menu item.
 **Auth:** Required (TENANT users can only create in their tenant)
 
 **Request Body:**
+
 ```json
 {
   "tenantId": "uuid",
@@ -827,6 +913,7 @@ Create a new menu item.
 ```
 
 **Validation:**
+
 - `name`: 2-100 characters
 - `description`: max 500 characters
 - `price`: positive integer (in cents)
@@ -834,6 +921,7 @@ Create a new menu item.
 - `categoryId`: must exist and belong to same tenant
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -852,6 +940,7 @@ Create a new menu item.
 ```
 
 ### Update Menu
+
 Update menu details.
 
 **Endpoint:** `PATCH /menus/:id`
@@ -859,6 +948,7 @@ Update menu details.
 **Auth:** Required (TENANT users can only update menus in their tenant)
 
 **Request Body:**
+
 ```json
 {
   "name": "Premium Caesar Salad",
@@ -873,6 +963,7 @@ Update menu details.
 **Response:** `200 OK`
 
 ### Toggle Menu Availability
+
 Quick toggle for menu availability.
 
 **Endpoint:** `PATCH /menus/:id/availability`
@@ -880,6 +971,7 @@ Quick toggle for menu availability.
 **Auth:** Required (TENANT users can only update menus in their tenant)
 
 **Request Body:**
+
 ```json
 {
   "isAvailable": false
@@ -887,6 +979,7 @@ Quick toggle for menu availability.
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -905,6 +998,7 @@ Quick toggle for menu availability.
 ```
 
 ### Bulk Update Menu Availability
+
 Update availability for multiple menus at once.
 
 **Endpoint:** `PATCH /menus/bulk/availability`
@@ -912,6 +1006,7 @@ Update availability for multiple menus at once.
 **Auth:** Required (TENANT users: all menus must belong to their tenant)
 
 **Request Body:**
+
 ```json
 {
   "menuIds": ["uuid1", "uuid2", "uuid3"],
@@ -920,6 +1015,7 @@ Update availability for multiple menus at once.
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -945,6 +1041,7 @@ Update availability for multiple menus at once.
 ```
 
 ### Delete Menu
+
 Delete a menu item.
 
 **Endpoint:** `DELETE /menus/:id`
@@ -952,6 +1049,7 @@ Delete a menu item.
 **Auth:** Required (TENANT users can only delete menus in their tenant)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -961,30 +1059,223 @@ Delete a menu item.
 
 ---
 
+## Tables
+
+### List Tables
+
+List tables (GLOBAL: all tables, TENANT: own tenant tables). Optionally filter by status.
+
+**Endpoint:** `GET /tables`
+
+**Auth:** Required (both scopes)
+
+**Query Parameters:**
+
+- `status` (optional) - Filter by status: `AVAILABLE` or `OCCUPIED`
+
+**Examples:**
+
+```
+GET /tables
+GET /tables?status=AVAILABLE
+GET /tables?status=OCCUPIED
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "tenantId": "uuid",
+      "name": "Table 1",
+      "capacity": 4,
+      "status": "AVAILABLE",
+      "createdAt": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Tables by Tenant
+
+List tables in specific tenant.
+
+**Endpoint:** `GET /tables/tenant/:tenantId`
+
+**Auth:** Required (TENANT users can only access their own tenant)
+
+**Response:** `200 OK`
+
+### Get Table by ID
+
+Get specific table.
+
+**Endpoint:** `GET /tables/:id`
+
+**Auth:** Required (TENANT users can only access tables in their tenant)
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "tenantId": "uuid",
+    "name": "Table 1",
+    "capacity": 4,
+    "status": "AVAILABLE",
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+### Create Table
+
+Create a new table.
+
+**Endpoint:** `POST /tables`
+
+**Auth:** Required (TENANT users can only create in their tenant)
+
+**Request Body:**
+
+```json
+{
+  "tenantId": "uuid",
+  "name": "Table 1",
+  "capacity": 4,
+  "status": "AVAILABLE"
+}
+```
+
+**Validation:**
+
+- `name`: 1-50 characters
+- `capacity`: positive integer
+- `status`: `AVAILABLE` or `OCCUPIED` (default: `AVAILABLE`)
+
+**Response:** `201 Created`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "tenantId": "uuid",
+    "name": "Table 1",
+    "capacity": 4,
+    "status": "AVAILABLE",
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+### Update Table
+
+Update table details (name, capacity, status).
+
+**Endpoint:** `PATCH /tables/:id`
+
+**Auth:** Required (TENANT users can only update tables in their tenant)
+
+**Request Body:**
+
+```json
+{
+  "name": "VIP Table",
+  "capacity": 8,
+  "status": "OCCUPIED"
+}
+```
+
+**Response:** `200 OK`
+
+### Update Table Status
+
+Quick status change for a table.
+
+**Endpoint:** `PATCH /tables/:id/status`
+
+**Auth:** Required (TENANT users can only update tables in their tenant)
+
+**Request Body:**
+
+```json
+{
+  "status": "OCCUPIED"
+}
+```
+
+**Status Values:**
+
+- `AVAILABLE` - Table is free and ready
+- `OCCUPIED` - Table is in use
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "tenantId": "uuid",
+    "name": "Table 1",
+    "capacity": 4,
+    "status": "OCCUPIED",
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+### Delete Table
+
+Delete a table.
+
+**Endpoint:** `DELETE /tables/:id`
+
+**Auth:** Required (TENANT users can only delete tables in their tenant)
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Table deleted successfully"
+}
+```
+
+---
+
 ## Error Codes
 
-| Code | Description |
-|------|-------------|
-| 200 | Success |
-| 201 | Created |
-| 400 | Bad Request - Invalid input |
-| 401 | Unauthorized - Missing or invalid token |
-| 403 | Forbidden - Insufficient permissions |
-| 404 | Not Found - Resource doesn't exist |
-| 409 | Conflict - Duplicate resource |
-| 500 | Internal Server Error |
+| Code | Description                             |
+| ---- | --------------------------------------- |
+| 200  | Success                                 |
+| 201  | Created                                 |
+| 400  | Bad Request - Invalid input             |
+| 401  | Unauthorized - Missing or invalid token |
+| 403  | Forbidden - Insufficient permissions    |
+| 404  | Not Found - Resource doesn't exist      |
+| 409  | Conflict - Duplicate resource           |
+| 500  | Internal Server Error                   |
 
 ---
 
 ## Scope-Based Access
 
 ### GLOBAL Scope
+
 - Can access all resources across all tenants
 - Can create, update, delete any resource
 - Can create GLOBAL and TENANT scoped roles
 - Can create and modify permissions
 
 ### TENANT Scope
+
 - Can only access resources in their own tenant
 - Automatically filtered by `tenantId`
 - Can create TENANT-scoped roles only
@@ -998,6 +1289,7 @@ Delete a menu item.
 ### Restaurant Owner Workflow
 
 1. **Register**
+
 ```bash
 POST /auth/register
 {
@@ -1009,6 +1301,7 @@ POST /auth/register
 ```
 
 2. **Login**
+
 ```bash
 POST /auth/login
 {
@@ -1018,6 +1311,7 @@ POST /auth/login
 ```
 
 3. **Create Categories**
+
 ```bash
 POST /categories
 {
@@ -1027,6 +1321,7 @@ POST /categories
 ```
 
 4. **Create Menu Items**
+
 ```bash
 POST /menus
 {
@@ -1041,6 +1336,7 @@ POST /menus
 ```
 
 5. **Create Staff Role**
+
 ```bash
 POST /roles
 {
@@ -1052,6 +1348,7 @@ POST /roles
 ```
 
 6. **Add Staff User**
+
 ```bash
 POST /users
 {
@@ -1066,6 +1363,7 @@ POST /users
 ### Daily Operations
 
 **Toggle Menu Availability (Sold Out)**
+
 ```bash
 PATCH /menus/<menu-id>/availability
 {
@@ -1074,6 +1372,7 @@ PATCH /menus/<menu-id>/availability
 ```
 
 **Bulk Disable Breakfast Items**
+
 ```bash
 PATCH /menus/bulk/availability
 {
@@ -1083,6 +1382,7 @@ PATCH /menus/bulk/availability
 ```
 
 **Filter Available Menus by Category**
+
 ```bash
 GET /menus?categoryId=<appetizers-id>&isAvailable=true
 ```
@@ -1090,12 +1390,15 @@ GET /menus?categoryId=<appetizers-id>&isAvailable=true
 ---
 
 ## Rate Limiting
+
 Currently no rate limiting is implemented. Consider implementing rate limiting in production.
 
 ## Pagination
+
 Currently no pagination is implemented. All list endpoints return all matching records. Consider implementing pagination for production use.
 
 ## CORS
+
 CORS is configured to allow requests from the origin specified in `CORS_ORIGIN` environment variable.
 
 Allowed methods: `GET`, `POST`, `PATCH`, `DELETE`, `OPTIONS`
