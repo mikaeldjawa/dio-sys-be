@@ -1250,6 +1250,286 @@ Delete a table.
 
 ---
 
+## Customers
+
+### List Customers
+
+`GET /customers` — GLOBAL: all; TENANT: own tenant only.
+
+**Auth:** Required | **Permission:** `customer:read`
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "tenantId": "uuid",
+      "name": "John Doe",
+      "phone": "081234567890",
+      "email": "john@example.com",
+      "createdAt": "2024-01-01"
+    }
+  ]
+}
+```
+
+### Get Customers by Tenant
+
+`GET /customers/tenant/:tenantId` — **Auth:** Required | TENANT users can only access their own tenant.
+
+### Get Customer by ID
+
+`GET /customers/:id` — **Auth:** Required
+
+### Create Customer
+
+`POST /customers` — **Auth:** Required | **Permission:** `customer:create`
+
+```json
+{
+  "tenantId": "uuid",
+  "name": "John Doe",
+  "phone": "081234567890",
+  "email": "john@example.com"
+}
+```
+
+**Response:** `201 Created`
+
+### Update Customer
+
+`PATCH /customers/:id` — **Auth:** Required | **Permission:** `customer:update`
+
+```json
+{ "name": "Jane Doe", "phone": "087654321" }
+```
+
+### Delete Customer
+
+`DELETE /customers/:id` — **Auth:** Required | **Permission:** `customer:delete`
+
+---
+
+## Orders
+
+### List Orders (Staff)
+
+`GET /orders` — GLOBAL: all; TENANT: own tenant only.
+
+**Auth:** Required | **Permission:** `order:read`
+
+**Query Parameters:**
+
+- `status` — `NEW` | `PROCESSING` | `COMPLETED` | `CANCELED`
+- `tableId` — filter by specific table
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "tenantId": "uuid",
+      "tableId": "uuid",
+      "customerId": "uuid",
+      "status": "NEW",
+      "totalPrice": 85000,
+      "createdAt": "2024-01-01"
+    }
+  ]
+}
+```
+
+### Get Order by ID (Staff)
+
+`GET /orders/:id` — Returns order with items (menu name, quantity, price).
+
+**Auth:** Required | **Permission:** `order:read`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "tenantId": "uuid",
+    "tableId": "uuid",
+    "status": "NEW",
+    "totalPrice": 85000,
+    "items": [
+      {
+        "id": "uuid",
+        "menuId": "uuid",
+        "menuName": "Nasi Goreng",
+        "quantity": 2,
+        "price": 35000
+      }
+    ]
+  }
+}
+```
+
+### Create Order (Staff)
+
+`POST /orders` — **Auth:** Required | **Permission:** `order:create`
+
+`totalPrice` is **auto-calculated** server-side.
+
+```json
+{
+  "tenantId": "uuid",
+  "tableId": "uuid",
+  "customerId": "uuid (optional)",
+  "items": [{ "menuId": "uuid", "quantity": 2 }]
+}
+```
+
+**Response:** `201 Created` — Creates order, sets table status to `OCCUPIED`.
+
+### Update Order Status
+
+`PATCH /orders/:id/status` — **Auth:** Required | **Permission:** `order:update`
+
+**State machine:** `NEW → PROCESSING → COMPLETED` or any → `CANCELED`
+
+On `COMPLETED` or `CANCELED`, table is set back to `AVAILABLE`.
+
+```json
+{ "status": "PROCESSING" }
+```
+
+### Delete Order (Staff)
+
+`DELETE /orders/:id` — Only `NEW` status orders can be deleted.
+
+**Auth:** Required | **Permission:** `order:cancel`
+
+---
+
+### Get Public Menu (Customer QR)
+
+`GET /orders/public/menu?tableId=xxx` — **No auth required**
+
+Returns available menus and categories for the table's tenant.
+
+```json
+{
+  "success": true,
+  "data": {
+    "table": { "id": "uuid", "name": "Table 1", "capacity": 4 },
+    "categories": [...],
+    "menus": [{ "id": "uuid", "name": "Nasi Goreng", "price": 35000, "isAvailable": true, ... }]
+  }
+}
+```
+
+### Place Order (Customer QR Self-Service)
+
+`POST /orders/public` — **No auth required**
+
+Customer scans a QR code containing `tableId` and submits this payload. `tenantId` is derived server-side from the table.
+
+```json
+{
+  "tableId": "uuid",
+  "items": [{ "menuId": "uuid", "quantity": 2 }],
+  "customerName": "John Doe (optional)",
+  "customerPhone": "081234567890 (optional)",
+  "customerEmail": "john@example.com (optional)"
+}
+```
+
+**Response:** `201 Created` — Creates order + customer record (if name provided), sets table to `OCCUPIED`.
+
+---
+
+## Transactions
+
+### List Transactions
+
+`GET /transactions` — GLOBAL: all; TENANT: own tenant only.
+
+**Auth:** Required | **Permission:** `transaction:read`
+
+### Get Transaction by Order
+
+`GET /transactions/order/:orderId` — Get the transaction linked to a specific order.
+
+**Auth:** Required
+
+### Get Transaction by ID
+
+`GET /transactions/:id` — **Auth:** Required
+
+### Create Transaction (Payment)
+
+`POST /transactions` — Records a payment for a completed order.
+
+**Auth:** Required | **Permission:** `transaction:create`
+
+**Rules:**
+
+- Order must have status `COMPLETED`
+- Only one transaction per order (duplicate → `409`)
+- `totalAmount` taken from `order.totalPrice` (not from request)
+- After creating, sets table status back to `AVAILABLE`
+
+```json
+{ "orderId": "uuid", "paymentMethod": "cash" }
+```
+
+**Response:** `201 Created`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "tenantId": "uuid",
+    "orderId": "uuid",
+    "totalAmount": 85000,
+    "paymentMethod": "cash",
+    "createdAt": "2024-01-01"
+  }
+}
+```
+
+### Delete Transaction
+
+`DELETE /transactions/:id` — **Auth:** Required | **Permission:** `transaction:delete`
+
+---
+
+## Complete Order Flow
+
+```
+1. Staff creates order            POST /orders
+   → table status: AVAILABLE → OCCUPIED
+
+2. Staff updates status           PATCH /orders/:id/status  { "status": "PROCESSING" }
+3. Staff marks order complete     PATCH /orders/:id/status  { "status": "COMPLETED" }
+   → table status: OCCUPIED → AVAILABLE
+
+4. Staff records payment          POST /transactions
+   → transaction created with totalAmount from order
+```
+
+**Customer Self-Service Flow (QR):**
+
+```
+1. Customer scans QR code (contains tableId)
+2. Fetch menu                     GET /orders/public/menu?tableId=xxx
+3. Place order                    POST /orders/public
+   → table status: AVAILABLE → OCCUPIED
+4. Staff handles rest via staff flow above
+```
+
+---
+
 ## Error Codes
 
 | Code | Description                             |

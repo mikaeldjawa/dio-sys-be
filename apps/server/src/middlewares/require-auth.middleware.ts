@@ -6,6 +6,7 @@ export const requireAuth = (
   next: NextFunction,
 ): void => {
   try {
+    console.log(req.user);
     if (!req.user) {
       throw new Error("Authentication required");
     }

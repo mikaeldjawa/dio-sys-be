@@ -2,7 +2,7 @@ import { date, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { orders } from "./order";
 import { tenants } from "./tenant";
 
-export const trancations = pgTable("transactions", {
+export const transactions = pgTable("transactions", {
   id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id")
     .references(() => tenants.id)
