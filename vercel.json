@@ -1,16 +1,15 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
   "builds": [
     {
-      "src": "apps/server/dist/lambda.mjs",
+      "src": "apps/server/src/lambda.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "apps/server/dist/lambda.mjs"
+      "dest": "apps/server/src/lambda.ts"
     }
   ]
 }
