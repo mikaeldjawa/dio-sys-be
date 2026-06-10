@@ -1,3 +1,4 @@
+import { GLOBAL_ONLY_PERMISSIONS } from "@/constants/permissions";
 import { AppError } from "@/utils/app-error";
 import { db } from "@dio-sys-be/db";
 import { env } from "@dio-sys-be/env/server";
@@ -24,6 +25,19 @@ const generateRandomSuffix = (length: number): string => {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+};
+
+const parseExpiresIn = (expiresIn: string): Date => {
+  const match = expiresIn.match(/^(\d+)([smhd])$/);
+  if (!match) return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const value = parseInt(match[1]!);
+  const units: Record<string, number> = {
+    s: 1000,
+    m: 60_000,
+    h: 3_600_000,
+    d: 86_400_000,
+  };
+  return new Date(Date.now() + value * (units[match[2]!] ?? 86_400_000));
 };
 
 export const register = async (input: RegisterInput) => {
@@ -64,25 +78,6 @@ export const register = async (input: RegisterInput) => {
     if (allPermissions.length === 0) {
       throw new AppError("System permissions not configured", 500);
     }
-
-    const GLOBAL_ONLY_PERMISSIONS = new Set([
-      "tenant:list",
-      "tenant:create",
-      "tenant:update",
-      "tenant:delete",
-      "role:list",
-      "role:create",
-      "role:update",
-      "role:delete",
-      "permission:list",
-      "permission:create",
-      "permission:update",
-      "permission:delete",
-      "user:list",
-      "user:create",
-      "user:update",
-      "user:delete",
-    ]);
 
     const tenantPermissions = allPermissions.filter(
       (perm) => !GLOBAL_ONLY_PERMISSIONS.has(perm.name),
@@ -159,6 +154,12 @@ export const login = async (input: LoginInput) => {
     .setExpirationTime(env.JWT_REFRESH_EXPIRES_IN)
     .sign(refreshSecret);
 
+  await authRepo.updateUserRefreshToken(
+    user.id,
+    refreshToken,
+    parseExpiresIn(env.JWT_REFRESH_EXPIRES_IN),
+  );
+
   return { accessToken, refreshToken };
 };
 
@@ -172,7 +173,7 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
       refreshSecret,
     );
     payload = verifiedPayload;
-  } catch (error) {
+  } catch {
     throw new AppError("Invalid or expired refresh token", 401);
   }
 
@@ -183,10 +184,18 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
   const userId = payload.sub as string;
   const tenantId = payload.tenantId as string;
 
-  const user = await authRepo.findUserById(userId);
+  // Validate token against DB — catches revoked tokens
+  const storedUser = await authRepo.findUserByRefreshToken(input.refreshToken);
+  if (!storedUser || storedUser.id !== userId) {
+    throw new AppError("Refresh token has been revoked", 401);
+  }
 
-  if (!user) {
-    throw new AppError("User not found", 401);
+  if (
+    storedUser.refreshTokenExpiresAt &&
+    new Date(storedUser.refreshTokenExpiresAt) < new Date()
+  ) {
+    await authRepo.clearUserRefreshToken(userId);
+    throw new AppError("Refresh token has expired", 401);
   }
 
   const tenant = await authRepo.findTenantById(tenantId);
@@ -195,7 +204,7 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
   }
 
   const roleWithPermissions = await authRepo.findRoleWithPermissions(
-    user.roleId,
+    storedUser.roleId,
   );
   if (!roleWithPermissions) {
     throw new AppError("Account configuration error", 500);
@@ -203,7 +212,7 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
 
   const secret = new TextEncoder().encode(env.JWT_SECRET);
   const accessToken = await new SignJWT({
-    sub: user.id,
+    sub: storedUser.id,
     tenantId: tenant.id,
     scope: roleWithPermissions.scope,
     permissions: roleWithPermissions.permissions,
@@ -214,7 +223,7 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
 
   const newRefreshSecret = new TextEncoder().encode(env.JWT_REFRESH_SECRET);
   const newRefreshToken = await new SignJWT({
-    sub: user.id,
+    sub: storedUser.id,
     tenantId: tenant.id,
     type: "refresh",
   })
@@ -222,5 +231,15 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
     .setExpirationTime(env.JWT_REFRESH_EXPIRES_IN)
     .sign(newRefreshSecret);
 
+  await authRepo.updateUserRefreshToken(
+    storedUser.id,
+    newRefreshToken,
+    parseExpiresIn(env.JWT_REFRESH_EXPIRES_IN),
+  );
+
   return { accessToken, refreshToken: newRefreshToken };
+};
+
+export const logout = async (userId: string) => {
+  await authRepo.clearUserRefreshToken(userId);
 };

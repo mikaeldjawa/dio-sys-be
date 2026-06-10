@@ -1,10 +1,45 @@
 import { db } from "@dio-sys-be/db";
 import { menus, orderItems, orders } from "@dio-sys-be/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { OrderItemInput, OrderStatus } from "./order.schema";
 
+type OrderRow = typeof orders.$inferSelect;
+type OrderItemRow = {
+  id: string;
+  orderId: string;
+  menuId: string;
+  menuName: string;
+  quantity: number;
+  price: number;
+};
+
+const attachItems = async (
+  orderList: OrderRow[],
+): Promise<(OrderRow & { items: OrderItemRow[] })[]> => {
+  if (orderList.length === 0) return [];
+  const orderIds = orderList.map((o) => o.id);
+  const allItems = await db
+    .select({
+      id: orderItems.id,
+      orderId: orderItems.orderId,
+      menuId: orderItems.menuId,
+      menuName: menus.name,
+      quantity: orderItems.quantity,
+      price: orderItems.price,
+    })
+    .from(orderItems)
+    .innerJoin(menus, eq(orderItems.menuId, menus.id))
+    .where(inArray(orderItems.orderId, orderIds));
+
+  return orderList.map((order) => ({
+    ...order,
+    items: allItems.filter((item) => item.orderId === order.id),
+  }));
+};
+
 export const findAllOrders = async () => {
-  return await db.select().from(orders);
+  const orderList = await db.select().from(orders);
+  return attachItems(orderList);
 };
 
 export const findOrdersByTenantId = async (
@@ -20,10 +55,11 @@ export const findOrdersByTenantId = async (
     conditions.push(eq(orders.tableId, filters.tableId));
   }
 
-  return await db
+  const orderList = await db
     .select()
     .from(orders)
     .where(and(...conditions));
+  return attachItems(orderList);
 };
 
 export const findOrderById = async (id: string) => {
@@ -38,6 +74,7 @@ export const findOrderById = async (id: string) => {
   const items = await db
     .select({
       id: orderItems.id,
+      orderId: orderItems.orderId,
       menuId: orderItems.menuId,
       menuName: menus.name,
       quantity: orderItems.quantity,
@@ -51,10 +88,20 @@ export const findOrderById = async (id: string) => {
 };
 
 export const findOrdersByTableId = async (tableId: string) => {
+  return await db.select().from(orders).where(eq(orders.tableId, tableId));
+};
+
+export const findActiveOrdersByTableId = async (tableId: string) => {
+  const activeStatuses: OrderStatus[] = ["NEW", "PROCESSING"];
   return await db
     .select()
     .from(orders)
-    .where(eq(orders.tableId, tableId));
+    .where(
+      and(
+        eq(orders.tableId, tableId),
+        inArray(orders.status, activeStatuses),
+      ),
+    );
 };
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -82,6 +129,8 @@ export const createOrderWithItems = async (
 
   if (!order) throw new Error("Failed to create order");
 
+  let createdItems: OrderItemRow[] = [];
+
   if (items.length > 0) {
     const itemRows = items.map((item) => ({
       orderId: order.id,
@@ -90,9 +139,22 @@ export const createOrderWithItems = async (
       price: item.price,
     }));
     await tx.insert(orderItems).values(itemRows);
+
+    createdItems = await tx
+      .select({
+        id: orderItems.id,
+        orderId: orderItems.orderId,
+        menuId: orderItems.menuId,
+        menuName: menus.name,
+        quantity: orderItems.quantity,
+        price: orderItems.price,
+      })
+      .from(orderItems)
+      .innerJoin(menus, eq(orderItems.menuId, menus.id))
+      .where(eq(orderItems.orderId, order.id));
   }
 
-  return order;
+  return { ...order, items: createdItems };
 };
 
 export const updateOrderStatus = async (id: string, status: OrderStatus) => {
@@ -105,9 +167,6 @@ export const updateOrderStatus = async (id: string, status: OrderStatus) => {
 };
 
 export const deleteOrder = async (id: string) => {
-  const result = await db
-    .delete(orders)
-    .where(eq(orders.id, id))
-    .returning();
+  const result = await db.delete(orders).where(eq(orders.id, id)).returning();
   return result[0] || null;
 };

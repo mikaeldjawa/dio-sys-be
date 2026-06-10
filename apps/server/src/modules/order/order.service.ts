@@ -16,8 +16,6 @@ import type {
   UpdateOrderStatusInput,
 } from "./order.schema";
 
-const TERMINAL_STATUSES: OrderStatus[] = ["COMPLETED", "CANCELED"];
-
 const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   NEW: ["PROCESSING", "CANCELED"],
   PROCESSING: ["COMPLETED", "CANCELED"],
@@ -66,6 +64,8 @@ export const createOrder = async (
   if (!table) throw new AppError("Table not found", 404);
   if (table.tenantId !== input.tenantId)
     throw new AppError("Table does not belong to this tenant", 400);
+  if (table.status === "OCCUPIED")
+    throw new AppError("Table is already occupied with an active order", 409);
 
   if (input.customerId) {
     const customer = await customerRepo.findCustomerById(input.customerId);
@@ -137,7 +137,8 @@ export const updateOrderStatus = async (
 
   const updated = await orderRepo.updateOrderStatus(id, input.status);
 
-  if (TERMINAL_STATUSES.includes(input.status)) {
+  // Only free the table on CANCELED — COMPLETED orders still need payment (transaction)
+  if (input.status === "CANCELED") {
     await tableRepo.updateTable(order.tableId, { status: "AVAILABLE" });
   }
 
@@ -156,7 +157,12 @@ export const deleteOrder = async (ctx: UserContext, id: string) => {
     throw new AppError("Only NEW orders can be deleted", 400);
   }
 
-  return await orderRepo.deleteOrder(id);
+  await orderRepo.deleteOrder(id);
+
+  // Free the table now that the order is gone
+  await tableRepo.updateTable(order.tableId, { status: "AVAILABLE" });
+
+  return order;
 };
 
 export const getPublicMenu = async (tableId: string) => {
@@ -171,9 +177,14 @@ export const getPublicMenu = async (tableId: string) => {
     isAvailable: true,
   });
 
+  const menuCategoryIds = new Set(menus.map((m) => m.categoryId));
+  const filteredCategories = categories.filter((c) =>
+    menuCategoryIds.has(c.id),
+  );
+
   return {
     table: { id: table.id, name: table.name, capacity: table.capacity },
-    categories,
+    categories: filteredCategories,
     menus,
   };
 };
@@ -181,6 +192,8 @@ export const getPublicMenu = async (tableId: string) => {
 export const createPublicOrder = async (input: PublicCreateOrderInput) => {
   const table = await tableRepo.findTableById(input.tableId);
   if (!table) throw new AppError("Table not found", 404);
+  if (table.status === "OCCUPIED")
+    throw new AppError("Table is already occupied with an active order", 409);
 
   const tenantId = table.tenantId;
 

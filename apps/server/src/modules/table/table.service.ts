@@ -4,6 +4,7 @@ import {
   assertPermission,
   assertTenantMatch,
 } from "@/utils/assert-permission";
+import * as orderRepo from "../order/order.repository";
 import * as tenantRepo from "../tenant/tenant.repository";
 import * as tableRepo from "./table.repository";
 import type {
@@ -145,6 +146,11 @@ export const deleteTable = async (ctx: UserContext, id: string) => {
 
   if (ctx.scope === "TENANT") {
     assertTenantMatch(ctx, table.tenantId);
+  }
+
+  const activeOrders = await orderRepo.findActiveOrdersByTableId(id);
+  if (activeOrders.length > 0) {
+    throw new AppError("Cannot delete a table with active orders", 400);
   }
 
   return await tableRepo.deleteTable(id);

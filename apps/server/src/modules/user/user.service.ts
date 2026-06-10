@@ -81,6 +81,10 @@ export const createUser = async (ctx: UserContext, input: CreateUserInput) => {
     throw new AppError("Role not found", 404);
   }
 
+  if (ctx.scope === "TENANT" && role.tenantId !== ctx.tenantId) {
+    throw new AppError("Role does not belong to your tenant", 403);
+  }
+
   const existingUser = await userRepo.findUserByEmail(input.email);
   if (existingUser) {
     throw new AppError("Email already in use", 409);
@@ -118,6 +122,9 @@ export const updateUser = async (
     const role = await roleRepo.findRoleById(input.roleId);
     if (!role) {
       throw new AppError("Role not found", 404);
+    }
+    if (ctx.scope === "TENANT" && role.tenantId !== ctx.tenantId) {
+      throw new AppError("Role does not belong to your tenant", 403);
     }
   }
 

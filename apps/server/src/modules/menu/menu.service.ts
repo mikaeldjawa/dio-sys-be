@@ -17,8 +17,7 @@ export const listMenus = async (
   ctx: UserContext,
   filters?: { categoryId?: string; isAvailable?: boolean },
 ) => {
-  const permission = ctx.scope === "GLOBAL" ? "menu:read" : "menu:read";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "menu:read");
 
   const queryFilters: {
     tenantId?: string;
@@ -45,8 +44,7 @@ export const listMenus = async (
 };
 
 export const getMenusByTenant = async (ctx: UserContext, tenantId: string) => {
-  const permission = ctx.scope === "GLOBAL" ? "menu:read" : "menu:read";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "menu:read");
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -69,8 +67,7 @@ export const getMenusByCategory = async (
   ctx: UserContext,
   categoryId: string,
 ) => {
-  const permission = ctx.scope === "GLOBAL" ? "menu:read" : "menu:read";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "menu:read");
 
   const category = await categoryRepo.findCategoryById(categoryId);
   if (!category) {
@@ -85,8 +82,7 @@ export const getMenusByCategory = async (
 };
 
 export const getMenu = async (ctx: UserContext, id: string) => {
-  const permission = ctx.scope === "GLOBAL" ? "menu:read" : "menu:read";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "menu:read");
 
   const menu = await menuRepo.findMenuById(id);
   if (!menu) {
@@ -101,8 +97,7 @@ export const getMenu = async (ctx: UserContext, id: string) => {
 };
 
 export const createMenu = async (ctx: UserContext, input: CreateMenuInput) => {
-  const permission = ctx.scope === "GLOBAL" ? "menu:create" : "menu:create";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "menu:create");
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -143,8 +138,7 @@ export const updateMenu = async (
   id: string,
   input: UpdateMenuInput,
 ) => {
-  const permission = ctx.scope === "GLOBAL" ? "menu:update" : "menu:update";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "menu:update");
 
   const menu = await menuRepo.findMenuById(id);
   if (!menu) {
@@ -176,8 +170,7 @@ export const toggleAvailability = async (
   id: string,
   isAvailable: boolean,
 ) => {
-  const permission = ctx.scope === "GLOBAL" ? "menu:update" : "menu:update";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "menu:update");
 
   const menu = await menuRepo.findMenuById(id);
   if (!menu) {
@@ -195,8 +188,7 @@ export const bulkUpdateAvailability = async (
   ctx: UserContext,
   input: BulkUpdateAvailabilityInput,
 ) => {
-  const permission = ctx.scope === "GLOBAL" ? "menu:update" : "menu:update";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "menu:update");
 
   const menus = await menuRepo.findMenusByIds(input.menuIds);
 
@@ -227,8 +219,7 @@ export const bulkUpdateAvailability = async (
 };
 
 export const deleteMenu = async (ctx: UserContext, id: string) => {
-  const permission = ctx.scope === "GLOBAL" ? "menu:delete" : "menu:delete";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "menu:delete");
 
   const menu = await menuRepo.findMenuById(id);
   if (!menu) {

@@ -6,6 +6,11 @@ import type {
 } from "./auth.schema";
 import * as authService from "./auth.service";
 
+export const logout: RequestHandler = async (req, res) => {
+  await authService.logout(req.user!.userId);
+  res.json({ success: true, message: "Logged out successfully" });
+};
+
 export const register: RequestHandler<object, object, RegisterInput> = async (
   req,
   res,

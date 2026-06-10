@@ -1,3 +1,4 @@
+import { GLOBAL_ONLY_PERMISSIONS } from "@/constants/permissions";
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
 import { assertPermission, assertTenantMatch } from "@/utils/assert-permission";
@@ -80,11 +81,18 @@ export const createRole = async (ctx: UserContext, input: CreateRoleInput) => {
   }
 
   if (input.permissionIds.length > 0) {
-    const perms = await permissionRepo.findPermissionsByIds(
-      input.permissionIds,
-    );
+    const perms = await permissionRepo.findPermissionsByIds(input.permissionIds);
     if (perms.length !== input.permissionIds.length) {
       throw new AppError("One or more permissions not found", 404);
+    }
+    if (ctx.scope === "TENANT") {
+      const forbidden = perms.find((p) => GLOBAL_ONLY_PERMISSIONS.has(p.name));
+      if (forbidden) {
+        throw new AppError(
+          `Permission "${forbidden.name}" cannot be assigned to TENANT-scoped roles`,
+          403,
+        );
+      }
     }
   }
 
@@ -127,11 +135,18 @@ export const updateRole = async (
   }
 
   if (input.permissionIds) {
-    const perms = await permissionRepo.findPermissionsByIds(
-      input.permissionIds,
-    );
+    const perms = await permissionRepo.findPermissionsByIds(input.permissionIds);
     if (perms.length !== input.permissionIds.length) {
       throw new AppError("One or more permissions not found", 404);
+    }
+    if (ctx.scope === "TENANT") {
+      const forbidden = perms.find((p) => GLOBAL_ONLY_PERMISSIONS.has(p.name));
+      if (forbidden) {
+        throw new AppError(
+          `Permission "${forbidden.name}" cannot be assigned to TENANT-scoped roles`,
+          403,
+        );
+      }
     }
   }
 

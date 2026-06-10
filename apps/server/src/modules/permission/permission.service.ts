@@ -1,3 +1,4 @@
+import { GLOBAL_ONLY_PERMISSIONS } from "@/constants/permissions";
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
 import { assertGlobalScope, assertPermission } from "@/utils/assert-permission";
@@ -11,7 +12,14 @@ export const listPermissions = async (ctx: UserContext) => {
   const permission =
     ctx.scope === "GLOBAL" ? "permission:list" : "permission:view";
   assertPermission(ctx, permission);
-  return await permissionRepo.findAllPermissions();
+
+  const allPermissions = await permissionRepo.findAllPermissions();
+
+  if (ctx.scope === "TENANT") {
+    return allPermissions.filter((p) => !GLOBAL_ONLY_PERMISSIONS.has(p.name));
+  }
+
+  return allPermissions;
 };
 
 export const getPermission = async (ctx: UserContext, id: string) => {
@@ -22,6 +30,11 @@ export const getPermission = async (ctx: UserContext, id: string) => {
   if (!permission) {
     throw new AppError("Permission not found", 404);
   }
+
+  if (ctx.scope === "TENANT" && GLOBAL_ONLY_PERMISSIONS.has(permission.name)) {
+    throw new AppError("Permission not found", 404);
+  }
+
   return permission;
 };
 
