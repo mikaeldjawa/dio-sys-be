@@ -25,6 +25,10 @@ app.use(
 
 app.use(express.json());
 
+app.get("/", (_req, res) => {
+  res.json({ success: true, message: "dio-sys-be is running" });
+});
+
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/tenants", tenantRoute);
 app.use("/api/v1/roles", roleRoute);
