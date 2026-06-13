@@ -35,6 +35,7 @@ export const assertTenantMatch = (
 };
 
 export const assertPermission = (ctx: UserContext, required: string): void => {
+  if (ctx.scope === "GLOBAL") return;
   if (!ctx.permissions.includes(required)) {
     throw new AppError(`Missing required permission: ${required}`, 403);
   }

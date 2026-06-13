@@ -20,21 +20,30 @@ type RoleWithPermissions = {
 };
 
 export const findUserByEmail = async (email: string) => {
-  return db.query.users.findFirst({
-    where: (user, { eq }) => eq(user.email, email),
-  });
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  return result[0] ?? null;
 };
 
 export const findUserById = async (id: string) => {
-  return db.query.users.findFirst({
-    where: (user, { eq }) => eq(user.id, id),
-  });
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+  return result[0] ?? null;
 };
 
 export const findTenantBySlug = async (slug: string) => {
-  return db.query.tenants.findFirst({
-    where: (tenant, { eq }) => eq(tenant.slug, slug),
-  });
+  const result = await db
+    .select()
+    .from(tenants)
+    .where(eq(tenants.slug, slug))
+    .limit(1);
+  return result[0] ?? null;
 };
 
 export const createTenant = async (
@@ -42,9 +51,7 @@ export const createTenant = async (
   tx: Transaction,
 ) => {
   const [tenant] = await tx.insert(tenants).values(data).returning();
-  if (!tenant) {
-    throw new Error("Failed to create tenant");
-  }
+  if (!tenant) throw new Error("Failed to create tenant");
   return tenant;
 };
 
@@ -53,9 +60,7 @@ export const createRole = async (
   tx: Transaction,
 ) => {
   const [role] = await tx.insert(roles).values(data).returning();
-  if (!role) {
-    throw new Error("Failed to create role");
-  }
+  if (!role) throw new Error("Failed to create role");
   return role;
 };
 
@@ -82,43 +87,37 @@ export const createUser = async (
   tx: Transaction,
 ) => {
   const [user] = await tx.insert(users).values(data).returning();
-  if (!user) {
-    throw new Error("Failed to create user");
-  }
+  if (!user) throw new Error("Failed to create user");
   return user;
 };
 
 export const findTenantById = async (id: string) => {
-  return db.query.tenants.findFirst({
-    where: (tenant, { eq }) => eq(tenant.id, id),
-  });
+  const result = await db
+    .select()
+    .from(tenants)
+    .where(eq(tenants.id, id))
+    .limit(1);
+  return result[0] ?? null;
 };
 
-export const findRoleWithPermissions = async (
-  roleId: string,
-): Promise<RoleWithPermissions | null> => {
-  const role = await db.query.roles.findFirst({
-    where: (r, { eq }) => eq(r.id, roleId),
-    with: {
-      rolePermissions: {
-        with: {
-          permission: true,
-        },
-      },
-    },
-  });
+export const findRoleWithPermissions = async (roleId: string) => {
+  const roleResult = await db
+    .select()
+    .from(roles)
+    .where(eq(roles.id, roleId))
+    .limit(1);
 
-  if (!role) return null;
+  if (!roleResult[0]) return null;
 
-  const permissionNames = role.rolePermissions.map((rp) => rp.permission.name as string);
+  const perms = await db
+    .select({ name: permissions.name })
+    .from(rolePermissions)
+    .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+    .where(eq(rolePermissions.roleId, roleId));
 
   return {
-    id: role.id,
-    tenantId: role.tenantId,
-    name: role.name,
-    scope: role.scope,
-    createdAt: role.createdAt,
-    permissions: permissionNames,
+    ...roleResult[0],
+    permissions: perms.map((p) => p.name),
   };
 };
 
@@ -129,28 +128,24 @@ export const updateUserRefreshToken = async (
 ) => {
   const [user] = await db
     .update(users)
-    .set({
-      refreshToken,
-      refreshTokenExpiresAt: expiresAt,
-    })
+    .set({ refreshToken, refreshTokenExpiresAt: expiresAt })
     .where(eq(users.id, userId))
     .returning();
-
   return user;
 };
 
 export const findUserByRefreshToken = async (refreshToken: string) => {
-  return db.query.users.findFirst({
-    where: (user, { eq }) => eq(user.refreshToken, refreshToken),
-  });
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.refreshToken, refreshToken))
+    .limit(1);
+  return result[0] ?? null;
 };
 
 export const clearUserRefreshToken = async (userId: string) => {
   await db
     .update(users)
-    .set({
-      refreshToken: null,
-      refreshTokenExpiresAt: null,
-    })
+    .set({ refreshToken: null, refreshTokenExpiresAt: null })
     .where(eq(users.id, userId));
 };

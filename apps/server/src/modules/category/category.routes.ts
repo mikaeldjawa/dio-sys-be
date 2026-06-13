@@ -18,7 +18,7 @@ router.get(
 );
 router.get("/:id", asyncHandler(categoryController.getCategory));
 router.post(
-  "/",
+  "/", 
   validate(createCategorySchema),
   asyncHandler(categoryController.createCategory),
 );

@@ -12,7 +12,7 @@ export const tableStatus = pgEnum("tableStatus", ["AVAILABLE", "OCCUPIED"]);
 
 export const tables = pgTable("tables", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenant_id: uuid("tenant_id")
+  tenantId: uuid("tenant_id")
     .references(() => tenants.id)
     .notNull(),
   name: text("name").notNull(),

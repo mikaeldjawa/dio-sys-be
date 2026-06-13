@@ -12,8 +12,7 @@ import type {
 } from "./category.schema";
 
 export const listCategories = async (ctx: UserContext) => {
-  const permission = ctx.scope === "GLOBAL" ? "category:read" : "category:read";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "category:read");
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -29,8 +28,7 @@ export const getCategoriesByTenant = async (
   ctx: UserContext,
   tenantId: string,
 ) => {
-  const permission = ctx.scope === "GLOBAL" ? "category:read" : "category:read";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "category:read");
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -50,8 +48,7 @@ export const getCategoriesByTenant = async (
 };
 
 export const getCategory = async (ctx: UserContext, id: string) => {
-  const permission = ctx.scope === "GLOBAL" ? "category:read" : "category:read";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "category:read");
 
   const category = await categoryRepo.findCategoryById(id);
   if (!category) {
@@ -69,9 +66,7 @@ export const createCategory = async (
   ctx: UserContext,
   input: CreateCategoryInput,
 ) => {
-  const permission =
-    ctx.scope === "GLOBAL" ? "category:create" : "category:create";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "category:create");
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -101,9 +96,7 @@ export const updateCategory = async (
   id: string,
   input: UpdateCategoryInput,
 ) => {
-  const permission =
-    ctx.scope === "GLOBAL" ? "category:update" : "category:update";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "category:update");
 
   const category = await categoryRepo.findCategoryById(id);
   if (!category) {
@@ -118,9 +111,7 @@ export const updateCategory = async (
 };
 
 export const deleteCategory = async (ctx: UserContext, id: string) => {
-  const permission =
-    ctx.scope === "GLOBAL" ? "category:delete" : "category:delete";
-  assertPermission(ctx, permission);
+  assertPermission(ctx, "category:delete");
 
   const category = await categoryRepo.findCategoryById(id);
   if (!category) {

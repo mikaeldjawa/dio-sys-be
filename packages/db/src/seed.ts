@@ -57,8 +57,10 @@ const defaultPermissions = [
   "customer:create",
   "customer:read",
   "customer:update",
+  "customer:delete",
   "transaction:create",
   "transaction:read",
+  "transaction:delete",
 ];
 
 export const seedPermissions = async () => {

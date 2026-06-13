@@ -1,0 +1,18 @@
+export const GLOBAL_ONLY_PERMISSIONS = new Set([
+  "tenant:list",
+  "tenant:create",
+  "tenant:update",
+  "tenant:delete",
+  "role:list",
+  "role:create",
+  "role:update",
+  "role:delete",
+  "permission:list",
+  "permission:create",
+  "permission:update",
+  "permission:delete",
+  "user:list",
+  "user:create",
+  "user:update",
+  "user:delete",
+]);
