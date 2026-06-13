@@ -10,15 +10,6 @@ import { eq } from "drizzle-orm";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-type RoleWithPermissions = {
-  id: string;
-  tenantId: string;
-  name: string;
-  scope: "GLOBAL" | "TENANT";
-  createdAt: string | Date;
-  permissions: string[];
-};
-
 export const findUserByEmail = async (email: string) => {
   const result = await db
     .select()
