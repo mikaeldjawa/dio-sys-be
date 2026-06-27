@@ -1,9 +1,6 @@
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
-import {
-  assertPermission,
-  assertTenantMatch,
-} from "@/utils/assert-permission";
+import { assertTenantMatch } from "@/utils/assert-permission";
 import * as tenantRepo from "../tenant/tenant.repository";
 import * as customerRepo from "./customer.repository";
 import type {
@@ -12,7 +9,7 @@ import type {
 } from "./customer.schema";
 
 export const listCustomers = async (ctx: UserContext) => {
-  assertPermission(ctx, "customer:read");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) throw new AppError("Tenant context required", 400);
@@ -26,7 +23,7 @@ export const getCustomersByTenant = async (
   ctx: UserContext,
   tenantId: string,
 ) => {
-  assertPermission(ctx, "customer:read");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) throw new AppError("Tenant context required", 400);
@@ -41,7 +38,7 @@ export const getCustomersByTenant = async (
 };
 
 export const getCustomer = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "customer:read");
+  // Permission check now handled by route middleware
 
   const customer = await customerRepo.findCustomerById(id);
   if (!customer) throw new AppError("Customer not found", 404);
@@ -55,7 +52,7 @@ export const createCustomer = async (
   ctx: UserContext,
   input: CreateCustomerInput,
 ) => {
-  assertPermission(ctx, "customer:create");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) throw new AppError("Tenant context required", 400);
@@ -79,7 +76,7 @@ export const updateCustomer = async (
   id: string,
   input: UpdateCustomerInput,
 ) => {
-  assertPermission(ctx, "customer:update");
+  // Permission check now handled by route middleware
 
   const customer = await customerRepo.findCustomerById(id);
   if (!customer) throw new AppError("Customer not found", 404);
@@ -94,7 +91,7 @@ export const updateCustomer = async (
 };
 
 export const deleteCustomer = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "customer:delete");
+  // Permission check now handled by route middleware
 
   const customer = await customerRepo.findCustomerById(id);
   if (!customer) throw new AppError("Customer not found", 404);

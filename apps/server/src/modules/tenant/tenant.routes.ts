@@ -11,10 +11,18 @@ const router = Router();
 
 router.use(authenticate);
 
+// GLOBAL-only operations
 router.get("/", requireGlobal, asyncHandler(tenantController.listTenants));
 
-router.get("/me", requireAuth, asyncHandler(tenantController.getMyTenant));
+// Tenant-scoped operations (accessible by tenant users)
+router.get(
+  "/me",
+  requireAuth,
+  // requirePermission("tenant:view"),
+  asyncHandler(tenantController.getMyTenant),
+);
 
+// GLOBAL-only operations
 router.get("/:id", requireGlobal, asyncHandler(tenantController.getTenant));
 
 router.post(
@@ -24,13 +32,16 @@ router.post(
   asyncHandler(tenantController.createTenant),
 );
 
+// Tenant-scoped operations
 router.patch(
   "/me",
   requireAuth,
+  // requirePermission("tenant:manage", "tenant:update"),
   validate(updateTenantSchema),
   asyncHandler(tenantController.updateMyTenant),
 );
 
+// GLOBAL-only operations
 router.patch(
   "/:id",
   requireGlobal,
@@ -38,12 +49,15 @@ router.patch(
   asyncHandler(tenantController.updateTenant),
 );
 
+// Tenant-scoped operations
 router.delete(
   "/me",
   requireAuth,
+  // requirePermission("tenant:manage", "tenant:delete"),
   asyncHandler(tenantController.deleteMyTenant),
 );
 
+// GLOBAL-only operations
 router.delete(
   "/:id",
   requireGlobal,

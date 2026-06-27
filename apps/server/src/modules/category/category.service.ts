@@ -1,9 +1,6 @@
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
-import {
-  assertPermission,
-  assertTenantMatch,
-} from "@/utils/assert-permission";
+import { assertTenantMatch } from "@/utils/assert-permission";
 import * as tenantRepo from "../tenant/tenant.repository";
 import * as categoryRepo from "./category.repository";
 import type {
@@ -12,7 +9,7 @@ import type {
 } from "./category.schema";
 
 export const listCategories = async (ctx: UserContext) => {
-  assertPermission(ctx, "category:read");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -28,7 +25,7 @@ export const getCategoriesByTenant = async (
   ctx: UserContext,
   tenantId: string,
 ) => {
-  assertPermission(ctx, "category:read");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -48,7 +45,7 @@ export const getCategoriesByTenant = async (
 };
 
 export const getCategory = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "category:read");
+  // Permission check now handled by route middleware
 
   const category = await categoryRepo.findCategoryById(id);
   if (!category) {
@@ -66,7 +63,7 @@ export const createCategory = async (
   ctx: UserContext,
   input: CreateCategoryInput,
 ) => {
-  assertPermission(ctx, "category:create");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -96,7 +93,7 @@ export const updateCategory = async (
   id: string,
   input: UpdateCategoryInput,
 ) => {
-  assertPermission(ctx, "category:update");
+  // Permission check now handled by route middleware
 
   const category = await categoryRepo.findCategoryById(id);
   if (!category) {
@@ -111,7 +108,7 @@ export const updateCategory = async (
 };
 
 export const deleteCategory = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "category:delete");
+  // Permission check now handled by route middleware
 
   const category = await categoryRepo.findCategoryById(id);
   if (!category) {

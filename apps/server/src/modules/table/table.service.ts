@@ -1,9 +1,6 @@
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
-import {
-  assertPermission,
-  assertTenantMatch,
-} from "@/utils/assert-permission";
+import { assertTenantMatch } from "@/utils/assert-permission";
 import * as orderRepo from "../order/order.repository";
 import * as tenantRepo from "../tenant/tenant.repository";
 import * as tableRepo from "./table.repository";
@@ -17,7 +14,7 @@ export const listTables = async (
   ctx: UserContext,
   filters?: { status?: TableStatus },
 ) => {
-  assertPermission(ctx, "table:read");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -36,7 +33,7 @@ export const listTables = async (
 };
 
 export const getTablesByTenant = async (ctx: UserContext, tenantId: string) => {
-  assertPermission(ctx, "table:read");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -56,7 +53,7 @@ export const getTablesByTenant = async (ctx: UserContext, tenantId: string) => {
 };
 
 export const getTable = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "table:read");
+  // Permission check now handled by route middleware
 
   const table = await tableRepo.findTableById(id);
   if (!table) {
@@ -74,7 +71,7 @@ export const createTable = async (
   ctx: UserContext,
   input: CreateTableInput,
 ) => {
-  assertPermission(ctx, "table:create");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
@@ -103,7 +100,7 @@ export const updateTable = async (
   id: string,
   input: UpdateTableInput,
 ) => {
-  assertPermission(ctx, "table:update");
+  // Permission check now handled by route middleware
 
   const table = await tableRepo.findTableById(id);
   if (!table) {
@@ -122,7 +119,7 @@ export const updateTableStatus = async (
   id: string,
   status: TableStatus,
 ) => {
-  assertPermission(ctx, "table:update");
+  // Permission check now handled by route middleware
 
   const table = await tableRepo.findTableById(id);
   if (!table) {
@@ -137,7 +134,7 @@ export const updateTableStatus = async (
 };
 
 export const deleteTable = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "table:delete");
+  // Permission check now handled by route middleware
 
   const table = await tableRepo.findTableById(id);
   if (!table) {

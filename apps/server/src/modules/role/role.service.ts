@@ -1,7 +1,7 @@
 import { GLOBAL_ONLY_PERMISSIONS } from "@/constants/permissions";
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
-import { assertPermission, assertTenantMatch } from "@/utils/assert-permission";
+import { assertTenantMatch } from "@/utils/assert-permission";
 import { db } from "@dio-sys-be/db";
 import * as permissionRepo from "../permission/permission.repository";
 import * as tenantRepo from "../tenant/tenant.repository";
@@ -9,9 +9,7 @@ import * as roleRepo from "./role.repository";
 import type { CreateRoleInput, UpdateRoleInput } from "./role.schema";
 
 export const listRoles = async (ctx: UserContext) => {
-  const permission = ctx.scope === "GLOBAL" ? "role:list" : "role:view";
-  assertPermission(ctx, permission);
-
+  // Permission check now handled by route middleware
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
       throw new AppError("Tenant context required", 400);
@@ -23,9 +21,7 @@ export const listRoles = async (ctx: UserContext) => {
 };
 
 export const getRolesByTenant = async (ctx: UserContext, tenantId: string) => {
-  const permission = ctx.scope === "GLOBAL" ? "role:list" : "role:view";
-  assertPermission(ctx, permission);
-
+  // Permission check now handled by route middleware
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
       throw new AppError("Tenant context required", 400);
@@ -44,9 +40,7 @@ export const getRolesByTenant = async (ctx: UserContext, tenantId: string) => {
 };
 
 export const getRole = async (ctx: UserContext, id: string) => {
-  const permission = ctx.scope === "GLOBAL" ? "role:list" : "role:view";
-  assertPermission(ctx, permission);
-
+  // Permission check now handled by route middleware
   const role = await roleRepo.findRoleById(id);
   if (!role) {
     throw new AppError("Role not found", 404);
@@ -60,24 +54,41 @@ export const getRole = async (ctx: UserContext, id: string) => {
 };
 
 export const createRole = async (ctx: UserContext, input: CreateRoleInput) => {
-  const permission = ctx.scope === "GLOBAL" ? "role:create" : "role:manage";
-  assertPermission(ctx, permission);
+  // Permission check now handled by route middleware
 
-  if (ctx.scope === "TENANT") {
-    if (!ctx.tenantId) {
-      throw new AppError("Tenant context required", 400);
+  // Handle GLOBAL scope roles
+  if (input.scope === "GLOBAL") {
+    // Only GLOBAL users can create GLOBAL roles
+    if (ctx.scope !== "GLOBAL") {
+      throw new AppError("Only GLOBAL admins can create GLOBAL-scoped roles", 403);
     }
-    if (input.tenantId !== ctx.tenantId) {
-      throw new AppError("You can only create roles in your own tenant", 403);
+    // GLOBAL roles must have null tenantId
+    input.tenantId = null;
+  } else {
+    // TENANT scope roles
+    if (ctx.scope === "TENANT") {
+      if (!ctx.tenantId) {
+        throw new AppError("Tenant context required", 400);
+      }
+      // For TENANT users, use their tenantId if not provided
+      if (!input.tenantId) {
+        input.tenantId = ctx.tenantId;
+      }
+      if (input.tenantId !== ctx.tenantId) {
+        throw new AppError("You can only create roles in your own tenant", 403);
+      }
     }
-    if (input.scope === "GLOBAL") {
-      throw new AppError("TENANT users cannot create GLOBAL-scoped roles", 403);
-    }
-  }
 
-  const tenant = await tenantRepo.findTenantById(input.tenantId);
-  if (!tenant) {
-    throw new AppError("Tenant not found", 404);
+    // TENANT roles must have tenantId
+    if (!input.tenantId) {
+      throw new AppError("TENANT roles must have a tenantId", 400);
+    }
+
+    // Validate tenant exists
+    const tenant = await tenantRepo.findTenantById(input.tenantId);
+    if (!tenant) {
+      throw new AppError("Tenant not found", 404);
+    }
   }
 
   if (input.permissionIds.length > 0) {
@@ -98,7 +109,7 @@ export const createRole = async (ctx: UserContext, input: CreateRoleInput) => {
 
   return await db.transaction(async (tx) => {
     const role = await roleRepo.createRole({
-      tenantId: input.tenantId,
+      tenantId: input.tenantId as string,
       name: input.name,
       scope: input.scope,
     });
@@ -116,9 +127,7 @@ export const updateRole = async (
   id: string,
   input: UpdateRoleInput,
 ) => {
-  const permission = ctx.scope === "GLOBAL" ? "role:update" : "role:manage";
-  assertPermission(ctx, permission);
-
+  // Permission check now handled by route middleware
   const role = await roleRepo.findRoleById(id);
   if (!role) {
     throw new AppError("Role not found", 404);
@@ -165,9 +174,7 @@ export const updateRole = async (
 };
 
 export const deleteRole = async (ctx: UserContext, id: string) => {
-  const permission = ctx.scope === "GLOBAL" ? "role:delete" : "role:manage";
-  assertPermission(ctx, permission);
-
+  // Permission check now handled by route middleware
   const role = await roleRepo.findRoleById(id);
   if (!role) {
     throw new AppError("Role not found", 404);

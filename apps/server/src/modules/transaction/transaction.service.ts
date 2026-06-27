@@ -1,17 +1,13 @@
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
-import {
-  assertPermission,
-  assertTenantMatch,
-} from "@/utils/assert-permission";
+import { assertTenantMatch } from "@/utils/assert-permission";
 import * as orderRepo from "../order/order.repository";
 import * as tableRepo from "../table/table.repository";
 import * as transactionRepo from "./transaction.repository";
 import type { CreateTransactionInput } from "./transaction.schema";
 
 export const listTransactions = async (ctx: UserContext) => {
-  assertPermission(ctx, "transaction:read");
-
+  // Permission check now handled by route middleware
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) throw new AppError("Tenant context required", 400);
     return await transactionRepo.findTransactionsByTenantId(ctx.tenantId);
@@ -21,8 +17,7 @@ export const listTransactions = async (ctx: UserContext) => {
 };
 
 export const getTransaction = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "transaction:read");
-
+  // Permission check now handled by route middleware
   const transaction = await transactionRepo.findTransactionById(id);
   if (!transaction) throw new AppError("Transaction not found", 404);
 
@@ -35,8 +30,7 @@ export const getTransactionByOrder = async (
   ctx: UserContext,
   orderId: string,
 ) => {
-  assertPermission(ctx, "transaction:read");
-
+  // Permission check now handled by route middleware
   const order = await orderRepo.findOrderById(orderId);
   if (!order) throw new AppError("Order not found", 404);
 
@@ -52,8 +46,7 @@ export const createTransaction = async (
   ctx: UserContext,
   input: CreateTransactionInput,
 ) => {
-  assertPermission(ctx, "transaction:create");
-
+  // Permission check now handled by route middleware
   const order = await orderRepo.findOrderById(input.orderId);
   if (!order) throw new AppError("Order not found", 404);
 
@@ -81,14 +74,16 @@ export const createTransaction = async (
     paymentMethod: input.paymentMethod,
   });
 
-  await tableRepo.updateTable(order.tableId, { status: "AVAILABLE" });
+  // Only update table status if order has a table assigned
+  if (order.tableId) {
+    await tableRepo.updateTable(order.tableId, { status: "AVAILABLE" });
+  }
 
   return transaction;
 };
 
 export const deleteTransaction = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "transaction:delete");
-
+  // Permission check now handled by route middleware
   const transaction = await transactionRepo.findTransactionById(id);
   if (!transaction) throw new AppError("Transaction not found", 404);
 

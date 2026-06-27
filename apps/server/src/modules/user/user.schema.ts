@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createUserSchema = z.object({
-  tenantId: z.string().uuid(),
+  tenantId: z.string().uuid().nullable().optional(),
   roleId: z.string().uuid(),
   name: z.string().min(2).max(100).trim(),
   email: z.string().email().toLowerCase().trim(),
@@ -13,6 +13,7 @@ export const createUserSchema = z.object({
       "Password must contain uppercase, lowercase, and digit",
     ),
 });
+// Note: tenantId validation based on role scope will be done in service layer
 
 export const updateUserSchema = z.object({
   name: z.string().min(2).max(100).trim().optional(),

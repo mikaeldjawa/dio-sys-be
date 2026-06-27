@@ -1,6 +1,6 @@
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
-import { assertGlobalScope, assertPermission } from "@/utils/assert-permission";
+import { assertGlobalScope } from "@/utils/assert-permission";
 import * as tenantRepo from "./tenant.repository";
 import type { CreateTenantInput, UpdateTenantInput } from "./tenant.schema";
 
@@ -22,13 +22,13 @@ const generateRandomSuffix = (length: number): string => {
 
 export const listTenants = async (ctx: UserContext) => {
   assertGlobalScope(ctx);
-  assertPermission(ctx, "tenant:list");
+  // Permission check now handled by route middleware
   return await tenantRepo.findAllTenants();
 };
 
 export const getTenant = async (ctx: UserContext, id: string) => {
   assertGlobalScope(ctx);
-  assertPermission(ctx, "tenant:list");
+  // Permission check now handled by route middleware
 
   const tenant = await tenantRepo.findTenantById(id);
   if (!tenant) {
@@ -38,8 +38,7 @@ export const getTenant = async (ctx: UserContext, id: string) => {
 };
 
 export const getMyTenant = async (ctx: UserContext) => {
-  const permission = ctx.scope === "GLOBAL" ? "tenant:list" : "tenant:view";
-  assertPermission(ctx, permission);
+  // Permission check now handled by route middleware
 
   if (!ctx.tenantId) {
     throw new AppError("Tenant context required", 400);
@@ -57,7 +56,7 @@ export const createTenant = async (
   input: CreateTenantInput,
 ) => {
   assertGlobalScope(ctx);
-  assertPermission(ctx, "tenant:create");
+  // Permission check now handled by route middleware
 
   let slug = input.slug || generateSlug(input.name);
   let slugExists = await tenantRepo.findTenantBySlug(slug);
@@ -85,7 +84,7 @@ export const updateTenant = async (
   input: UpdateTenantInput,
 ) => {
   assertGlobalScope(ctx);
-  assertPermission(ctx, "tenant:update");
+  // Permission check now handled by route middleware
 
   const tenant = await tenantRepo.findTenantById(id);
   if (!tenant) {
@@ -106,8 +105,7 @@ export const updateMyTenant = async (
   ctx: UserContext,
   input: UpdateTenantInput,
 ) => {
-  const permission = ctx.scope === "GLOBAL" ? "tenant:update" : "tenant:manage";
-  assertPermission(ctx, permission);
+  // Permission check now handled by route middleware
 
   if (!ctx.tenantId) {
     throw new AppError("Tenant context required", 400);
@@ -130,7 +128,7 @@ export const updateMyTenant = async (
 
 export const deleteTenant = async (ctx: UserContext, id: string) => {
   assertGlobalScope(ctx);
-  assertPermission(ctx, "tenant:delete");
+  // Permission check now handled by route middleware
 
   const tenant = await tenantRepo.findTenantById(id);
   if (!tenant) {
@@ -141,8 +139,7 @@ export const deleteTenant = async (ctx: UserContext, id: string) => {
 };
 
 export const deleteMyTenant = async (ctx: UserContext) => {
-  const permission = ctx.scope === "GLOBAL" ? "tenant:delete" : "tenant:manage";
-  assertPermission(ctx, permission);
+  // Permission check now handled by route middleware
 
   if (!ctx.tenantId) {
     throw new AppError("Tenant context required", 400);

@@ -1,18 +1,17 @@
 export const GLOBAL_ONLY_PERMISSIONS = new Set([
+  // Tenant management - GLOBAL only (super admins manage restaurants)
   "tenant:list",
+  "tenant:view",
   "tenant:create",
   "tenant:update",
   "tenant:delete",
-  "role:list",
-  "role:create",
-  "role:update",
-  "role:delete",
-  "permission:list",
+  "tenant:manage",
+  
+  // Permission management - GLOBAL only (system-level permissions)
+  // "permission:list" - REMOVED: Allow tenant admins to list permissions for role management
+  "permission:view",
   "permission:create",
   "permission:update",
   "permission:delete",
-  "user:list",
-  "user:create",
-  "user:update",
-  "user:delete",
+  "permission:manage",
 ]);

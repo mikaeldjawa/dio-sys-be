@@ -1,9 +1,6 @@
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
-import {
-  assertPermission,
-  assertTenantMatch,
-} from "@/utils/assert-permission";
+import { assertTenantMatch } from "@/utils/assert-permission";
 import * as categoryRepo from "../category/category.repository";
 import * as tenantRepo from "../tenant/tenant.repository";
 import * as menuRepo from "./menu.repository";
@@ -17,8 +14,7 @@ export const listMenus = async (
   ctx: UserContext,
   filters?: { categoryId?: string; isAvailable?: boolean },
 ) => {
-  assertPermission(ctx, "menu:read");
-
+  // Permission check now handled by route middleware
   const queryFilters: {
     tenantId?: string;
     categoryId?: string;
@@ -44,8 +40,7 @@ export const listMenus = async (
 };
 
 export const getMenusByTenant = async (ctx: UserContext, tenantId: string) => {
-  assertPermission(ctx, "menu:read");
-
+  // Permission check now handled by route middleware
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
       throw new AppError("Tenant context required", 400);
@@ -67,8 +62,7 @@ export const getMenusByCategory = async (
   ctx: UserContext,
   categoryId: string,
 ) => {
-  assertPermission(ctx, "menu:read");
-
+  // Permission check now handled by route middleware
   const category = await categoryRepo.findCategoryById(categoryId);
   if (!category) {
     throw new AppError("Category not found", 404);
@@ -82,8 +76,7 @@ export const getMenusByCategory = async (
 };
 
 export const getMenu = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "menu:read");
-
+  // Permission check now handled by route middleware
   const menu = await menuRepo.findMenuById(id);
   if (!menu) {
     throw new AppError("Menu not found", 404);
@@ -97,8 +90,7 @@ export const getMenu = async (ctx: UserContext, id: string) => {
 };
 
 export const createMenu = async (ctx: UserContext, input: CreateMenuInput) => {
-  assertPermission(ctx, "menu:create");
-
+  // Permission check now handled by route middleware
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
       throw new AppError("Tenant context required", 400);
@@ -138,8 +130,7 @@ export const updateMenu = async (
   id: string,
   input: UpdateMenuInput,
 ) => {
-  assertPermission(ctx, "menu:update");
-
+  // Permission check now handled by route middleware
   const menu = await menuRepo.findMenuById(id);
   if (!menu) {
     throw new AppError("Menu not found", 404);
@@ -170,8 +161,7 @@ export const toggleAvailability = async (
   id: string,
   isAvailable: boolean,
 ) => {
-  assertPermission(ctx, "menu:update");
-
+  // Permission check now handled by route middleware
   const menu = await menuRepo.findMenuById(id);
   if (!menu) {
     throw new AppError("Menu not found", 404);
@@ -188,8 +178,7 @@ export const bulkUpdateAvailability = async (
   ctx: UserContext,
   input: BulkUpdateAvailabilityInput,
 ) => {
-  assertPermission(ctx, "menu:update");
-
+  // Permission check now handled by route middleware
   const menus = await menuRepo.findMenusByIds(input.menuIds);
 
   if (menus.length !== input.menuIds.length) {
@@ -219,8 +208,7 @@ export const bulkUpdateAvailability = async (
 };
 
 export const deleteMenu = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "menu:delete");
-
+  // Permission check now handled by route middleware
   const menu = await menuRepo.findMenuById(id);
   if (!menu) {
     throw new AppError("Menu not found", 404);

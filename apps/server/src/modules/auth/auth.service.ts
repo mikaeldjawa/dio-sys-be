@@ -83,10 +83,12 @@ export const register = async (input: RegisterInput) => {
       (perm) => !GLOBAL_ONLY_PERMISSIONS.has(perm.name),
     );
 
-    const rolePermissionRows = tenantPermissions.map((perm: { id: string }) => ({
-      roleId: role.id,
-      permissionId: perm.id,
-    }));
+    const rolePermissionRows = tenantPermissions.map(
+      (perm: { id: string }) => ({
+        roleId: role.id,
+        permissionId: perm.id,
+      }),
+    );
 
     await authRepo.createRolePermissions(rolePermissionRows, tx);
 
@@ -121,11 +123,6 @@ export const login = async (input: LoginInput) => {
     throw new AppError("Invalid credentials", 401);
   }
 
-  const tenant = await authRepo.findTenantById(user.tenantId);
-  if (!tenant) {
-    throw new AppError("Account configuration error", 500);
-  }
-
   const roleWithPermissions = await authRepo.findRoleWithPermissions(
     user.roleId,
   );
@@ -133,10 +130,25 @@ export const login = async (input: LoginInput) => {
     throw new AppError("Account configuration error", 500);
   }
 
+  // For global users (tenantId = null), tenant lookup is not needed
+  // For tenant users, validate tenant exists
+  let tenant = null;
+  if (user.tenantId) {
+    tenant = await authRepo.findTenantById(user.tenantId);
+    if (!tenant) {
+      throw new AppError("Account configuration error", 500);
+    }
+  } else {
+    // Global user - verify role scope matches
+    if (roleWithPermissions.scope !== "GLOBAL") {
+      throw new AppError("Account configuration error: user tenantId mismatch with role scope", 500);
+    }
+  }
+
   const secret = new TextEncoder().encode(env.JWT_SECRET);
   const accessToken = await new SignJWT({
     sub: user.id as string,
-    tenantId: tenant.id as string,
+    tenantId: tenant?.id ?? null,
     scope: roleWithPermissions.scope,
     permissions: roleWithPermissions.permissions,
   })
@@ -147,7 +159,7 @@ export const login = async (input: LoginInput) => {
   const refreshSecret = new TextEncoder().encode(env.JWT_REFRESH_SECRET);
   const refreshToken = await new SignJWT({
     sub: user.id as string,
-    tenantId: tenant.id as string,
+    tenantId: tenant?.id ?? null,
     type: "refresh",
   })
     .setProtectedHeader({ alg: "HS256" })
@@ -182,7 +194,7 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
   }
 
   const userId = payload.sub as string;
-  const tenantId = payload.tenantId as string;
+  const tenantId = payload.tenantId as string | null;
 
   // Validate token against DB — catches revoked tokens
   const storedUser = await authRepo.findUserByRefreshToken(input.refreshToken);
@@ -198,11 +210,6 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
     throw new AppError("Refresh token has expired", 401);
   }
 
-  const tenant = await authRepo.findTenantById(tenantId);
-  if (!tenant) {
-    throw new AppError("Account configuration error", 500);
-  }
-
   const roleWithPermissions = await authRepo.findRoleWithPermissions(
     storedUser.roleId,
   );
@@ -210,10 +217,24 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
     throw new AppError("Account configuration error", 500);
   }
 
+  // For global users (tenantId = null), tenant lookup is not needed
+  let tenant = null;
+  if (tenantId) {
+    tenant = await authRepo.findTenantById(tenantId);
+    if (!tenant) {
+      throw new AppError("Account configuration error", 500);
+    }
+  } else {
+    // Global user - verify role scope matches
+    if (roleWithPermissions.scope !== "GLOBAL") {
+      throw new AppError("Account configuration error: user tenantId mismatch with role scope", 500);
+    }
+  }
+
   const secret = new TextEncoder().encode(env.JWT_SECRET);
   const accessToken = await new SignJWT({
     sub: storedUser.id,
-    tenantId: tenant.id,
+    tenantId: tenant?.id ?? null,
     scope: roleWithPermissions.scope,
     permissions: roleWithPermissions.permissions,
   })
@@ -224,7 +245,7 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
   const newRefreshSecret = new TextEncoder().encode(env.JWT_REFRESH_SECRET);
   const newRefreshToken = await new SignJWT({
     sub: storedUser.id,
-    tenantId: tenant.id,
+    tenantId: tenant?.id ?? null,
     type: "refresh",
   })
     .setProtectedHeader({ alg: "HS256" })
@@ -242,4 +263,27 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
 
 export const logout = async (userId: string) => {
   await authRepo.clearUserRefreshToken(userId);
+};
+
+export const getCurrentUserWithPermissions = async (userId: string) => {
+  const user = await authRepo.findUserById(userId);
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const roleWithPermissions = await authRepo.findRoleWithPermissions(
+    user.roleId,
+  );
+  if (!roleWithPermissions) {
+    throw new AppError("User role not found", 500);
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    tenantId: user.tenantId,
+    scope: roleWithPermissions.scope,
+    permissions: roleWithPermissions.permissions,
+  };
 };

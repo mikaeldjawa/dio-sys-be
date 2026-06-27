@@ -45,3 +45,12 @@ export const refresh: RequestHandler<
     data: result,
   });
 };
+
+export const getCurrentUser: RequestHandler = async (req, res) => {
+  const userId = req.user!.userId;
+  const result = await authService.getCurrentUserWithPermissions(userId);
+  res.json({
+    success: true,
+    data: result,
+  });
+};

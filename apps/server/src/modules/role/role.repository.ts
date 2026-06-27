@@ -1,13 +1,49 @@
 import { db } from "@dio-sys-be/db";
 import { permissions, rolePermissions, roles } from "@dio-sys-be/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 export const findAllRoles = async () => {
-  return await db.select().from(roles);
+  const allRoles = await db.select().from(roles);
+  
+  if (allRoles.length === 0) return [];
+  
+  const roleIds = allRoles.map((r) => r.id);
+  const allPerms = await db
+    .select({
+      roleId: rolePermissions.roleId,
+      id: permissions.id,
+      name: permissions.name,
+    })
+    .from(rolePermissions)
+    .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+    .where(inArray(rolePermissions.roleId, roleIds));
+  
+  return allRoles.map((role) => ({
+    ...role,
+    permissions: allPerms.filter((p) => p.roleId === role.id).map((p) => ({ id: p.id, name: p.name })),
+  }));
 };
 
 export const findRolesByTenantId = async (tenantId: string) => {
-  return await db.select().from(roles).where(eq(roles.tenantId, tenantId));
+  const tenantRoles = await db.select().from(roles).where(eq(roles.tenantId, tenantId));
+  
+  if (tenantRoles.length === 0) return [];
+  
+  const roleIds = tenantRoles.map((r) => r.id);
+  const allPerms = await db
+    .select({
+      roleId: rolePermissions.roleId,
+      id: permissions.id,
+      name: permissions.name,
+    })
+    .from(rolePermissions)
+    .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+    .where(inArray(rolePermissions.roleId, roleIds));
+  
+  return tenantRoles.map((role) => ({
+    ...role,
+    permissions: allPerms.filter((p) => p.roleId === role.id).map((p) => ({ id: p.id, name: p.name })),
+  }));
 };
 
 export const findRoleById = async (id: string) => {

@@ -14,7 +14,7 @@ export const orderItemInputSchema = z.object({
 
 export const createOrderSchema = z.object({
   tenantId: z.string().uuid(),
-  tableId: z.string().uuid(),
+  tableId: z.string().uuid().optional().nullable(),
   customerId: z.string().uuid().optional(),
   items: z.array(orderItemInputSchema).min(1),
 });
@@ -24,7 +24,7 @@ export const updateOrderStatusSchema = z.object({
 });
 
 export const publicCreateOrderSchema = z.object({
-  tableId: z.string().uuid(),
+  tableId: z.string().uuid().optional().nullable(),
   items: z.array(orderItemInputSchema).min(1),
   customerName: z.string().min(2).max(100).trim().optional(),
   customerPhone: z.string().min(5).max(20).trim().optional(),

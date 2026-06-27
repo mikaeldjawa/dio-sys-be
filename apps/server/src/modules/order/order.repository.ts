@@ -109,7 +109,7 @@ type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export const createOrderWithItems = async (
   orderData: {
     tenantId: string;
-    tableId: string;
+    tableId: string | null;
     customerId?: string | null;
     totalPrice: number;
   },

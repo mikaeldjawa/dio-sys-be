@@ -1,7 +1,7 @@
 import { GLOBAL_ONLY_PERMISSIONS } from "@/constants/permissions";
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
-import { assertGlobalScope, assertPermission } from "@/utils/assert-permission";
+import { assertGlobalScope } from "@/utils/assert-permission";
 import * as permissionRepo from "./permission.repository";
 import type {
   CreatePermissionInput,
@@ -9,10 +9,7 @@ import type {
 } from "./permission.schema";
 
 export const listPermissions = async (ctx: UserContext) => {
-  const permission =
-    ctx.scope === "GLOBAL" ? "permission:list" : "permission:view";
-  assertPermission(ctx, permission);
-
+  // Permission check now handled by route middleware
   const allPermissions = await permissionRepo.findAllPermissions();
 
   if (ctx.scope === "TENANT") {
@@ -23,9 +20,7 @@ export const listPermissions = async (ctx: UserContext) => {
 };
 
 export const getPermission = async (ctx: UserContext, id: string) => {
-  const perm = ctx.scope === "GLOBAL" ? "permission:list" : "permission:view";
-  assertPermission(ctx, perm);
-
+  // Permission check now handled by route middleware
   const permission = await permissionRepo.findPermissionById(id);
   if (!permission) {
     throw new AppError("Permission not found", 404);
@@ -43,7 +38,7 @@ export const createPermission = async (
   input: CreatePermissionInput,
 ) => {
   assertGlobalScope(ctx);
-  assertPermission(ctx, "permission:create");
+  // Permission check now handled by route middleware
 
   const existing = await permissionRepo.findPermissionByName(input.name);
   if (existing) {
@@ -59,7 +54,7 @@ export const updatePermission = async (
   input: UpdatePermissionInput,
 ) => {
   assertGlobalScope(ctx);
-  assertPermission(ctx, "permission:update");
+  // Permission check now handled by route middleware
 
   const permission = await permissionRepo.findPermissionById(id);
   if (!permission) {
@@ -78,7 +73,7 @@ export const updatePermission = async (
 
 export const deletePermission = async (ctx: UserContext, id: string) => {
   assertGlobalScope(ctx);
-  assertPermission(ctx, "permission:delete");
+  // Permission check now handled by route middleware
 
   const permission = await permissionRepo.findPermissionById(id);
   if (!permission) {

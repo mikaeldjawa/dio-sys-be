@@ -1,6 +1,6 @@
 import type { UserContext } from "@/types/user-context";
 import { AppError } from "@/utils/app-error";
-import { assertPermission, assertTenantMatch } from "@/utils/assert-permission";
+import { assertTenantMatch } from "@/utils/assert-permission";
 import { db } from "@dio-sys-be/db";
 import { tables } from "@dio-sys-be/db/schema";
 import { eq } from "drizzle-orm";
@@ -27,7 +27,7 @@ export const listOrders = async (
   ctx: UserContext,
   filters?: { status?: OrderStatus; tableId?: string },
 ) => {
-  assertPermission(ctx, "order:read");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) throw new AppError("Tenant context required", 400);
@@ -38,7 +38,7 @@ export const listOrders = async (
 };
 
 export const getOrder = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "order:read");
+  // Permission check now handled by route middleware
 
   const order = await orderRepo.findOrderById(id);
   if (!order) throw new AppError("Order not found", 404);
@@ -52,7 +52,7 @@ export const createOrder = async (
   ctx: UserContext,
   input: CreateOrderInput,
 ) => {
-  assertPermission(ctx, "order:create");
+  // Permission check now handled by route middleware
 
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) throw new AppError("Tenant context required", 400);
@@ -60,12 +60,15 @@ export const createOrder = async (
       throw new AppError("You can only create orders in your own tenant", 403);
   }
 
-  const table = await tableRepo.findTableById(input.tableId);
-  if (!table) throw new AppError("Table not found", 404);
-  if (table.tenantId !== input.tenantId)
-    throw new AppError("Table does not belong to this tenant", 400);
-  if (table.status === "OCCUPIED")
-    throw new AppError("Table is already occupied with an active order", 409);
+  // Only validate table if tableId is provided
+  if (input.tableId) {
+    const table = await tableRepo.findTableById(input.tableId);
+    if (!table) throw new AppError("Table not found", 404);
+    if (table.tenantId !== input.tenantId)
+      throw new AppError("Table does not belong to this tenant", 400);
+    if (table.status === "OCCUPIED")
+      throw new AppError("Table is already occupied with an active order", 409);
+  }
 
   if (input.customerId) {
     const customer = await customerRepo.findCustomerById(input.customerId);
@@ -98,7 +101,7 @@ export const createOrder = async (
     const order = await orderRepo.createOrderWithItems(
       {
         tenantId: input.tenantId,
-        tableId: input.tableId,
+        tableId: input.tableId ?? null,
         customerId: input.customerId ?? null,
         totalPrice,
       },
@@ -106,10 +109,13 @@ export const createOrder = async (
       tx,
     );
 
-    await tx
-      .update(tables)
-      .set({ status: "OCCUPIED" })
-      .where(eq(tables.id, input.tableId));
+    // Only update table status if tableId is provided
+    if (input.tableId) {
+      await tx
+        .update(tables)
+        .set({ status: "OCCUPIED" })
+        .where(eq(tables.id, input.tableId));
+    }
 
     return order;
   });
@@ -120,7 +126,7 @@ export const updateOrderStatus = async (
   id: string,
   input: UpdateOrderStatusInput,
 ) => {
-  assertPermission(ctx, "order:update");
+  // Permission check now handled by route middleware
 
   const order = await orderRepo.findOrderById(id);
   if (!order) throw new AppError("Order not found", 404);
@@ -138,7 +144,8 @@ export const updateOrderStatus = async (
   const updated = await orderRepo.updateOrderStatus(id, input.status);
 
   // Only free the table on CANCELED — COMPLETED orders still need payment (transaction)
-  if (input.status === "CANCELED") {
+  // And only if the order has a table assigned
+  if (input.status === "CANCELED" && order.tableId) {
     await tableRepo.updateTable(order.tableId, { status: "AVAILABLE" });
   }
 
@@ -146,7 +153,7 @@ export const updateOrderStatus = async (
 };
 
 export const deleteOrder = async (ctx: UserContext, id: string) => {
-  assertPermission(ctx, "order:cancel");
+  // Permission check now handled by route middleware
 
   const order = await orderRepo.findOrderById(id);
   if (!order) throw new AppError("Order not found", 404);
@@ -159,8 +166,10 @@ export const deleteOrder = async (ctx: UserContext, id: string) => {
 
   await orderRepo.deleteOrder(id);
 
-  // Free the table now that the order is gone
-  await tableRepo.updateTable(order.tableId, { status: "AVAILABLE" });
+  // Free the table now that the order is gone (only if order has a table)
+  if (order.tableId) {
+    await tableRepo.updateTable(order.tableId, { status: "AVAILABLE" });
+  }
 
   return order;
 };
@@ -190,12 +199,20 @@ export const getPublicMenu = async (tableId: string) => {
 };
 
 export const createPublicOrder = async (input: PublicCreateOrderInput) => {
-  const table = await tableRepo.findTableById(input.tableId);
-  if (!table) throw new AppError("Table not found", 404);
-  if (table.status === "OCCUPIED")
-    throw new AppError("Table is already occupied with an active order", 409);
-
-  const tenantId = table.tenantId;
+  // Validate table only if tableId is provided
+  let tenantId: string;
+  
+  if (input.tableId) {
+    const table = await tableRepo.findTableById(input.tableId);
+    if (!table) throw new AppError("Table not found", 404);
+    if (table.status === "OCCUPIED")
+      throw new AppError("Table is already occupied with an active order", 409);
+    tenantId = table.tenantId;
+  } else {
+    // For orders without table, tenantId must be provided another way
+    // This might need adjustment based on your public order flow
+    throw new AppError("Table ID is required for public orders", 400);
+  }
 
   const resolvedItems = await Promise.all(
     input.items.map(async (item) => {
@@ -243,15 +260,18 @@ export const createPublicOrder = async (input: PublicCreateOrderInput) => {
 
   return await db.transaction(async (tx) => {
     const order = await orderRepo.createOrderWithItems(
-      { tenantId, tableId: input.tableId, customerId, totalPrice },
+      { tenantId, tableId: input.tableId ?? null, customerId, totalPrice },
       resolvedItems,
       tx,
     );
 
-    await tx
-      .update(tables)
-      .set({ status: "OCCUPIED" })
-      .where(eq(tables.id, input.tableId));
+    // Only update table status if tableId is provided
+    if (input.tableId) {
+      await tx
+        .update(tables)
+        .set({ status: "OCCUPIED" })
+        .where(eq(tables.id, input.tableId));
+    }
 
     return order;
   });

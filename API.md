@@ -394,7 +394,7 @@ Invalidate the current refresh token server-side.
 
 **Constraints:**
 - TENANT users cannot set `scope: "GLOBAL"`
-- TENANT users cannot assign global-only permissions (`tenant:*`, `role:*`, `permission:*`, `user:list/create/update/delete`)
+- TENANT users cannot assign global-only permissions (`tenant:*`, `permission:view/create/update/delete/manage`)
 
 **Response:** `201 Created`
 
@@ -425,7 +425,7 @@ Invalidate the current refresh token server-side.
 
 **Endpoint:** `GET /permissions` — **Auth:** Required (both scopes)
 
-> **Note:** TENANT users only see permissions assignable at TENANT scope. Global-only permissions (`tenant:*`, `role:list/create/update/delete`, etc.) are hidden from TENANT scope responses.
+> **Note:** TENANT users can list all permissions in the system (needed for role management UI). However, they cannot assign global-only permissions (`tenant:*`, `permission:view/create/update/delete/manage`) to TENANT-scoped roles - this is enforced server-side during role creation/update.
 
 **Response:** `200 OK`
 
@@ -470,7 +470,7 @@ Invalidate the current refresh token server-side.
 
 **Endpoint:** `GET /categories` — GLOBAL: all, TENANT: own tenant only
 
-**Auth:** Required | **Permission:** `category:read`
+**Auth:** Required | **Permission:** `category:list`
 
 **Response:** `200 OK`
 
@@ -529,7 +529,7 @@ Invalidate the current refresh token server-side.
 
 **Endpoint:** `GET /menus` — GLOBAL: all, TENANT: own tenant only
 
-**Auth:** Required | **Permission:** `menu:read`
+**Auth:** Required | **Permission:** `menu:list`
 
 **Query Parameters:**
 
@@ -633,7 +633,7 @@ All fields optional. If `categoryId` is provided it must belong to the same tena
 
 **Endpoint:** `GET /tables` — GLOBAL: all, TENANT: own tenant only
 
-**Auth:** Required | **Permission:** `table:read`
+**Auth:** Required | **Permission:** `table:list`
 
 **Query Parameters:**
 
@@ -706,7 +706,7 @@ All fields optional. If `categoryId` is provided it must belong to the same tena
 
 **Endpoint:** `GET /customers` — GLOBAL: all, TENANT: own tenant only
 
-**Auth:** Required | **Permission:** `customer:read`
+**Auth:** Required | **Permission:** `customer:list`
 
 **Response:** `200 OK`
 
@@ -769,7 +769,7 @@ All fields optional. If `categoryId` is provided it must belong to the same tena
 
 **Endpoint:** `GET /orders` — GLOBAL: all, TENANT: own tenant only
 
-**Auth:** Required | **Permission:** `order:read`
+**Auth:** Required | **Permission:** `order:list`
 
 **Query Parameters:**
 
@@ -807,7 +807,7 @@ All fields optional. If `categoryId` is provided it must belong to the same tena
 
 ### Get Order by ID (Staff)
 
-**Endpoint:** `GET /orders/:id` — **Auth:** Required | **Permission:** `order:read`
+**Endpoint:** `GET /orders/:id` — **Auth:** Required | **Permission:** `order:list`
 
 Response shape is identical to the list item above.
 
@@ -949,7 +949,7 @@ Customer scans a QR code containing `tableId` and submits this payload. `tenantI
 
 **Endpoint:** `GET /transactions` — GLOBAL: all, TENANT: own tenant only
 
-**Auth:** Required | **Permission:** `transaction:read`
+**Auth:** Required | **Permission:** `transaction:list`
 
 ### Get Transaction by Order
 
@@ -1064,8 +1064,8 @@ DELETE /orders/:id  (NEW orders only)
 
 - All queries automatically filtered to own `tenantId`
 - Can only create `TENANT`-scoped roles
-- Can only assign non-global permissions to roles
-- Can only see non-global permissions in `GET /permissions`
+- Can list all permissions via `GET /permissions` (needed when creating/editing roles)
+- Can only assign non-global permissions to roles (global-only: `tenant:*`, `permission:view/create/update/delete/manage`)
 - Cannot access other tenants' data
 
 ---

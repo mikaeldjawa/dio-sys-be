@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { permissions, rolePermissions, roles, tenants, users } from "./schema";
+import { permissions, rolePermissions, roles, users } from "./schema";
 
 dotenv.config({ path: "../../apps/server/.env" });
 
@@ -15,52 +15,85 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const db = drizzle(pool);
 
 const defaultPermissions = [
+  // Tenant permissions (GLOBAL only)
   "tenant:list",
+  "tenant:view",
   "tenant:create",
   "tenant:update",
   "tenant:delete",
-  "tenant:view",
   "tenant:manage",
+
+  // Role permissions
   "role:list",
+  "role:view",
   "role:create",
   "role:update",
   "role:delete",
-  "role:view",
   "role:manage",
+
+  // Permission permissions (GLOBAL only)
   "permission:list",
+  "permission:view",
   "permission:create",
   "permission:update",
   "permission:delete",
-  "permission:view",
+  "permission:manage",
+
+  // User permissions
   "user:list",
+  "user:view",
   "user:create",
   "user:update",
   "user:delete",
-  "user:view",
   "user:manage",
+
+  // Menu permissions (TENANT)
+  "menu:list",
+  "menu:view",
   "menu:create",
-  "menu:read",
   "menu:update",
   "menu:delete",
+  "menu:manage",
+
+  // Category permissions (TENANT)
+  "category:list",
+  "category:view",
   "category:create",
-  "category:read",
   "category:update",
   "category:delete",
+  "category:manage",
+
+  // Order permissions (TENANT)
+  "order:list",
+  "order:view",
   "order:create",
-  "order:read",
   "order:update",
-  "order:cancel",
+  "order:delete",
+  "order:manage",
+
+  // Table permissions (TENANT)
+  "table:list",
+  "table:view",
   "table:create",
-  "table:read",
   "table:update",
   "table:delete",
+  "table:manage",
+
+  // Customer permissions (TENANT)
+  "customer:list",
+  "customer:view",
   "customer:create",
-  "customer:read",
   "customer:update",
   "customer:delete",
+  "customer:manage",
+
+  // Transaction permissions (TENANT)
+  "transaction:list",
+  "transaction:view",
   "transaction:create",
-  "transaction:read",
+  "transaction:update",
   "transaction:delete",
+  "transaction:manage",
 ];
 
 export const seedPermissions = async () => {
@@ -92,28 +125,27 @@ export const seedPermissions = async () => {
 export const seedSuperAdmin = async () => {
   console.log("Seeding super-admin...");
 
-  const existingTenant = await db
+  // Check if super admin already exists
+  const existingAdmin = await db
     .select()
-    .from(tenants)
-    .where(eq(tenants.slug, "system"))
+    .from(users)
+    .where(eq(users.email, "admin@system.local"))
     .limit(1);
 
-  if (existingTenant.length > 0) {
+  if (existingAdmin.length > 0) {
     console.log("Super-admin already exists. Skipping.");
     return;
   }
 
-  const tenant = await db
-    .insert(tenants)
-    .values({ name: "System", slug: "system" })
-    .returning();
+  // No need to create a "system" tenant - global users have NULL tenantId
 
   const allPermissions = await db.select().from(permissions);
 
+  // Create GLOBAL role with NULL tenantId
   const role = await db
     .insert(roles)
     .values({
-      tenantId: tenant[0]!.id,
+      tenantId: null,
       name: "Super Admin",
       scope: "GLOBAL",
     })
@@ -128,8 +160,9 @@ export const seedSuperAdmin = async () => {
 
   const hashedPassword = await bcrypt.hash("Admin@123", 12);
 
+  // Create global user with NULL tenantId
   await db.insert(users).values({
-    tenantId: tenant[0]!.id,
+    tenantId: null,
     roleId: role[0]!.id,
     name: "Super Admin",
     email: "admin@system.local",
@@ -139,6 +172,7 @@ export const seedSuperAdmin = async () => {
   console.log("Super-admin seeded successfully.");
   console.log("Email: admin@system.local");
   console.log("Password: Admin@123");
+  console.log("Note: Global users/roles now have NULL tenantId");
 };
 
 if (import.meta.url === `file://${process.argv[1]}`) {

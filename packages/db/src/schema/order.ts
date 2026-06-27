@@ -15,9 +15,7 @@ export const orders = pgTable("orders", {
   tenantId: uuid("tenant_id")
     .references(() => tenants.id)
     .notNull(),
-  tableId: uuid("table_id")
-    .references(() => tables.id)
-    .notNull(),
+  tableId: uuid("table_id").references(() => tables.id),
   customerId: uuid("customer_id").references(() => customers.id),
   status: orderStatus("status").default("NEW").notNull(),
   totalPrice: integer("total_price").notNull(),

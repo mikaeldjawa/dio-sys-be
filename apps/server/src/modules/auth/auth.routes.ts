@@ -33,4 +33,11 @@ router.post(
   asyncHandler(authController.logout),
 );
 
+router.get(
+  "/me",
+  authenticate,
+  requireAuth,
+  asyncHandler(authController.getCurrentUser),
+);
+
 export default router;

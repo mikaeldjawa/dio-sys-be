@@ -27,9 +27,20 @@ export const assertScopeOneOf = (
 
 export const assertTenantMatch = (
   ctx: UserContext,
-  resourceTenantId: string,
+  resourceTenantId: string | null,
 ): void => {
-  if (ctx.scope === "TENANT" && ctx.tenantId !== resourceTenantId) {
+  // GLOBAL users have access to all resources
+  if (ctx.scope === "GLOBAL") {
+    return;
+  }
+
+  // TENANT users cannot access global resources (null tenantId)
+  if (resourceTenantId === null) {
+    throw new AppError("You do not have access to this global resource", 403);
+  }
+
+  // TENANT users can only access resources in their tenant
+  if (ctx.tenantId !== resourceTenantId) {
     throw new AppError("You do not have access to this resource", 403);
   }
 };
