@@ -6,11 +6,21 @@ import * as tableRepo from "../table/table.repository";
 import * as transactionRepo from "./transaction.repository";
 import type { CreateTransactionInput } from "./transaction.schema";
 
-export const listTransactions = async (ctx: UserContext) => {
+export const listTransactions = async (
+  ctx: UserContext,
+  filters?: { tenantId?: string },
+) => {
   // Permission check now handled by route middleware
+  
+  // For TENANT scope: always use their tenant (ignore any provided tenantId)
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) throw new AppError("Tenant context required", 400);
     return await transactionRepo.findTransactionsByTenantId(ctx.tenantId);
+  }
+
+  // For GLOBAL scope: use filter tenantId if provided
+  if (filters?.tenantId) {
+    return await transactionRepo.findTransactionsByTenantId(filters.tenantId);
   }
 
   return await transactionRepo.findAllTransactions();

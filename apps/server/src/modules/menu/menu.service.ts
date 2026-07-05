@@ -12,7 +12,7 @@ import type {
 
 export const listMenus = async (
   ctx: UserContext,
-  filters?: { categoryId?: string; isAvailable?: boolean },
+  filters?: { tenantId?: string; categoryId?: string; isAvailable?: boolean },
 ) => {
   // Permission check now handled by route middleware
   const queryFilters: {
@@ -21,11 +21,16 @@ export const listMenus = async (
     isAvailable?: boolean;
   } = {};
 
+  // For TENANT scope: always use their tenant (ignore any provided tenantId)
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
       throw new AppError("Tenant context required", 400);
     }
     queryFilters.tenantId = ctx.tenantId;
+  } 
+  // For GLOBAL scope: use filter tenantId if provided
+  else if (filters?.tenantId) {
+    queryFilters.tenantId = filters.tenantId;
   }
 
   if (filters?.categoryId) {

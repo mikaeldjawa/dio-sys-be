@@ -8,8 +8,12 @@ import type {
 } from "./order.schema";
 
 export const listOrders: RequestHandler = async (req, res) => {
-  const { status, tableId } = req.query;
-  const filters: { status?: OrderStatus; tableId?: string } = {};
+  const { tenantId, status, tableId } = req.query;
+  const filters: { tenantId?: string; status?: OrderStatus; tableId?: string } = {};
+
+  if (tenantId && typeof tenantId === "string") {
+    filters.tenantId = tenantId;
+  }
 
   if (
     status === "NEW" ||
@@ -19,6 +23,7 @@ export const listOrders: RequestHandler = async (req, res) => {
   ) {
     filters.status = status as OrderStatus;
   }
+
   if (tableId && typeof tableId === "string") {
     filters.tableId = tableId;
   }

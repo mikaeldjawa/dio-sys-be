@@ -6,7 +6,15 @@ import type {
 } from "./customer.schema";
 
 export const listCustomers: RequestHandler = async (req, res) => {
-  const data = await customerService.listCustomers(req.user!);
+  const { tenantId } = req.query;
+
+  const filters: { tenantId?: string } = {};
+
+  if (tenantId && typeof tenantId === "string") {
+    filters.tenantId = tenantId;
+  }
+
+  const data = await customerService.listCustomers(req.user!, filters);
   res.json({ success: true, data });
 };
 

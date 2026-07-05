@@ -8,9 +8,14 @@ import type {
 } from "./table.schema";
 
 export const listTables: RequestHandler = async (req, res) => {
-  const { status } = req.query;
+  const { tenantId, status } = req.query;
 
-  const filters: { status?: TableStatus } = {};
+  const filters: { tenantId?: string; status?: TableStatus } = {};
+
+  if (tenantId && typeof tenantId === "string") {
+    filters.tenantId = tenantId;
+  }
+
   if (status === "AVAILABLE" || status === "OCCUPIED") {
     filters.status = status;
   }

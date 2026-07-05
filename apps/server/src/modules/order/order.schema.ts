@@ -16,6 +16,8 @@ export const createOrderSchema = z.object({
   tenantId: z.string().uuid(),
   tableId: z.string().uuid().optional().nullable(),
   customerId: z.string().uuid().optional(),
+  customerName: z.string().min(2).max(100).trim().optional(),
+  customerPhone: z.string().min(5).max(20).trim().optional(),
   items: z.array(orderItemInputSchema).min(1),
 });
 

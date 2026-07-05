@@ -3,7 +3,15 @@ import * as transactionService from "./transaction.service";
 import type { CreateTransactionInput } from "./transaction.schema";
 
 export const listTransactions: RequestHandler = async (req, res) => {
-  const data = await transactionService.listTransactions(req.user!);
+  const { tenantId } = req.query;
+
+  const filters: { tenantId?: string } = {};
+
+  if (tenantId && typeof tenantId === "string") {
+    filters.tenantId = tenantId;
+  }
+
+  const data = await transactionService.listTransactions(req.user!, filters);
   res.json({ success: true, data });
 };
 

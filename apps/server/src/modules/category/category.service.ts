@@ -8,14 +8,23 @@ import type {
   UpdateCategoryInput,
 } from "./category.schema";
 
-export const listCategories = async (ctx: UserContext) => {
+export const listCategories = async (
+  ctx: UserContext,
+  filters?: { tenantId?: string },
+) => {
   // Permission check now handled by route middleware
 
+  // For TENANT scope: always use their tenant (ignore any provided tenantId)
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
       throw new AppError("Tenant context required", 400);
     }
     return await categoryRepo.findCategoriesByTenantId(ctx.tenantId);
+  }
+
+  // For GLOBAL scope: use filter tenantId if provided
+  if (filters?.tenantId) {
+    return await categoryRepo.findCategoriesByTenantId(filters.tenantId);
   }
 
   return await categoryRepo.findAllCategories();

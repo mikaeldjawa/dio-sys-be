@@ -1,5 +1,5 @@
 import { db } from "@dio-sys-be/db";
-import { menus, orderItems, orders } from "@dio-sys-be/db/schema";
+import { customers, menus, orderItems, orders, tables } from "@dio-sys-be/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
 import type { OrderItemInput, OrderStatus } from "./order.schema";
 
@@ -38,8 +38,22 @@ const attachItems = async (
 };
 
 export const findAllOrders = async () => {
-  const orderList = await db.select().from(orders);
-  return attachItems(orderList);
+  const orderList = await db
+    .select({
+      id: orders.id,
+      tenantId: orders.tenantId,
+      tableId: orders.tableId,
+      customerId: orders.customerId,
+      status: orders.status,
+      totalPrice: orders.totalPrice,
+      createdAt: orders.createdAt,
+      customerName: customers.name,
+      tableName: tables.name,
+    })
+    .from(orders)
+    .leftJoin(customers, eq(orders.customerId, customers.id))
+    .leftJoin(tables, eq(orders.tableId, tables.id));
+  return attachItems(orderList as any);
 };
 
 export const findOrdersByTenantId = async (
@@ -56,10 +70,22 @@ export const findOrdersByTenantId = async (
   }
 
   const orderList = await db
-    .select()
+    .select({
+      id: orders.id,
+      tenantId: orders.tenantId,
+      tableId: orders.tableId,
+      customerId: orders.customerId,
+      status: orders.status,
+      totalPrice: orders.totalPrice,
+      createdAt: orders.createdAt,
+      customerName: customers.name,
+      tableName: tables.name,
+    })
     .from(orders)
+    .leftJoin(customers, eq(orders.customerId, customers.id))
+    .leftJoin(tables, eq(orders.tableId, tables.id))
     .where(and(...conditions));
-  return attachItems(orderList);
+  return attachItems(orderList as any);
 };
 
 export const findOrderById = async (id: string) => {

@@ -1,6 +1,6 @@
 export const GLOBAL_ONLY_PERMISSIONS = new Set([
   // Tenant management - GLOBAL only (super admins manage restaurants)
-  "tenant:list",
+  // "tenant:list" - REMOVED: Allow tenant users to list their own tenant
   "tenant:view",
   "tenant:create",
   "tenant:update",

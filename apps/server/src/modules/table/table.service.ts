@@ -12,10 +12,11 @@ import type {
 
 export const listTables = async (
   ctx: UserContext,
-  filters?: { status?: TableStatus },
+  filters?: { tenantId?: string; status?: TableStatus },
 ) => {
   // Permission check now handled by route middleware
 
+  // For TENANT scope: always use their tenant (ignore any provided tenantId)
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) {
       throw new AppError("Tenant context required", 400);
@@ -27,6 +28,17 @@ export const listTables = async (
       );
     }
     return await tableRepo.findTablesByTenantId(ctx.tenantId);
+  }
+
+  // For GLOBAL scope: use filter tenantId if provided
+  if (filters?.tenantId) {
+    if (filters?.status) {
+      return await tableRepo.findTablesByTenantAndStatus(
+        filters.tenantId,
+        filters.status,
+      );
+    }
+    return await tableRepo.findTablesByTenantId(filters.tenantId);
   }
 
   return await tableRepo.findAllTables();

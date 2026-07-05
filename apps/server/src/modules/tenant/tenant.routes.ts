@@ -2,6 +2,7 @@ import { asyncHandler } from "@/middlewares/async.middleware";
 import { authenticate } from "@/middlewares/auth.middleware";
 import { requireAuth } from "@/middlewares/require-auth.middleware";
 import { requireGlobal } from "@/middlewares/require-global.middleware";
+import { requirePermission } from "@/middlewares/require-permission.middleware";
 import { validate } from "@/middlewares/validate.middleware";
 import { Router } from "express";
 import * as tenantController from "./tenant.controller";
@@ -11,8 +12,14 @@ const router = Router();
 
 router.use(authenticate);
 
-// GLOBAL-only operations
-router.get("/", requireGlobal, asyncHandler(tenantController.listTenants));
+// List tenants - accessible by both GLOBAL and TENANT scoped users
+// GLOBAL users see all tenants, TENANT users see only their own
+router.get(
+  "/",
+  requireAuth,
+  requirePermission("tenant:list"),
+  asyncHandler(tenantController.listTenants),
+);
 
 // Tenant-scoped operations (accessible by tenant users)
 router.get(

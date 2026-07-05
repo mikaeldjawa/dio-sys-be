@@ -8,12 +8,21 @@ import type {
   UpdateCustomerInput,
 } from "./customer.schema";
 
-export const listCustomers = async (ctx: UserContext) => {
+export const listCustomers = async (
+  ctx: UserContext,
+  filters?: { tenantId?: string },
+) => {
   // Permission check now handled by route middleware
 
+  // For TENANT scope: always use their tenant (ignore any provided tenantId)
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) throw new AppError("Tenant context required", 400);
     return await customerRepo.findCustomersByTenantId(ctx.tenantId);
+  }
+
+  // For GLOBAL scope: use filter tenantId if provided
+  if (filters?.tenantId) {
+    return await customerRepo.findCustomersByTenantId(filters.tenantId);
   }
 
   return await customerRepo.findAllCustomers();

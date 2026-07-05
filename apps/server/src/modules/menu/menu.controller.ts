@@ -8,9 +8,13 @@ import type {
 } from "./menu.schema";
 
 export const listMenus: RequestHandler = async (req, res) => {
-  const { categoryId, isAvailable } = req.query;
+  const { tenantId, categoryId, isAvailable } = req.query;
 
-  const filters: { categoryId?: string; isAvailable?: boolean } = {};
+  const filters: { tenantId?: string; categoryId?: string; isAvailable?: boolean } = {};
+
+  if (tenantId && typeof tenantId === "string") {
+    filters.tenantId = tenantId;
+  }
 
   if (categoryId && typeof categoryId === "string") {
     filters.categoryId = categoryId;

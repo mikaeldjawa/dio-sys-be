@@ -21,9 +21,22 @@ const generateRandomSuffix = (length: number): string => {
 };
 
 export const listTenants = async (ctx: UserContext) => {
-  assertGlobalScope(ctx);
   // Permission check now handled by route middleware
-  return await tenantRepo.findAllTenants();
+  
+  // GLOBAL users see all tenants, TENANT users see only their own
+  if (ctx.scope === "GLOBAL") {
+    return await tenantRepo.findAllTenants();
+  } else {
+    // TENANT scope - return only their own tenant
+    if (!ctx.tenantId) {
+      throw new AppError("Tenant ID is required for tenant-scoped users", 400);
+    }
+    const tenant = await tenantRepo.findTenantById(ctx.tenantId);
+    if (!tenant) {
+      throw new AppError("Tenant not found", 404);
+    }
+    return [tenant]; // Return as array to match the expected format
+  }
 };
 
 export const getTenant = async (ctx: UserContext, id: string) => {

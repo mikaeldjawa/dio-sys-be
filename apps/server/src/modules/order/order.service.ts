@@ -25,13 +25,19 @@ const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 
 export const listOrders = async (
   ctx: UserContext,
-  filters?: { status?: OrderStatus; tableId?: string },
+  filters?: { tenantId?: string; status?: OrderStatus; tableId?: string },
 ) => {
   // Permission check now handled by route middleware
 
+  // For TENANT scope: always use their tenant (ignore any provided tenantId)
   if (ctx.scope === "TENANT") {
     if (!ctx.tenantId) throw new AppError("Tenant context required", 400);
     return await orderRepo.findOrdersByTenantId(ctx.tenantId, filters);
+  }
+
+  // For GLOBAL scope: use filter tenantId if provided
+  if (filters?.tenantId) {
+    return await orderRepo.findOrdersByTenantId(filters.tenantId, filters);
   }
 
   return await orderRepo.findAllOrders();
@@ -46,6 +52,33 @@ export const getOrder = async (ctx: UserContext, id: string) => {
   if (ctx.scope === "TENANT") assertTenantMatch(ctx, order.tenantId);
 
   return order;
+};
+
+// Helper function to find or create customer
+const findOrCreateCustomer = async (
+  tenantId: string,
+  customerName: string,
+  customerPhone?: string,
+): Promise<string | null> => {
+  let customer = null;
+
+  if (customerPhone) {
+    customer = await customerRepo.findCustomerByPhoneAndTenant(
+      customerPhone,
+      tenantId,
+    );
+  }
+
+  if (!customer) {
+    customer = await customerRepo.createCustomer({
+      tenantId,
+      name: customerName,
+      phone: customerPhone ?? null,
+      email: null,
+    });
+  }
+
+  return customer?.id ?? null;
 };
 
 export const createOrder = async (
@@ -70,11 +103,22 @@ export const createOrder = async (
       throw new AppError("Table is already occupied with an active order", 409);
   }
 
+  // Handle customer - support both customerId and customerName
+  let customerId: string | null = null;
+
   if (input.customerId) {
     const customer = await customerRepo.findCustomerById(input.customerId);
     if (!customer) throw new AppError("Customer not found", 404);
     if (customer.tenantId !== input.tenantId)
       throw new AppError("Customer does not belong to this tenant", 400);
+    customerId = input.customerId;
+  } else if (input.customerName) {
+    // If customerName provided, find or create customer
+    customerId = await findOrCreateCustomer(
+      input.tenantId,
+      input.customerName,
+      input.customerPhone,
+    );
   }
 
   const resolvedItems = await Promise.all(
@@ -102,7 +146,7 @@ export const createOrder = async (
       {
         tenantId: input.tenantId,
         tableId: input.tableId ?? null,
-        customerId: input.customerId ?? null,
+        customerId: customerId,
         totalPrice,
       },
       resolvedItems,

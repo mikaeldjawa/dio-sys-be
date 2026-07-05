@@ -6,7 +6,15 @@ import type {
 } from "./category.schema";
 
 export const listCategories: RequestHandler = async (req, res) => {
-  const categories = await categoryService.listCategories(req.user!);
+  const { tenantId } = req.query;
+
+  const filters: { tenantId?: string } = {};
+
+  if (tenantId && typeof tenantId === "string") {
+    filters.tenantId = tenantId;
+  }
+
+  const categories = await categoryService.listCategories(req.user!, filters);
   res.json({
     success: true,
     data: categories,
