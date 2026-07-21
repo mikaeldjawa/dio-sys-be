@@ -1,17 +1,5 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "builds": [
-    {
-      "src": "apps/server/dist/lambda.mjs",
-      "use": "@vercel/node",
-      "config": { "includeFiles": ["apps/server/dist/**"] }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "apps/server/dist/lambda.mjs"
-    }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
 }
